@@ -1,7 +1,6 @@
 # translate
-translate api
 
-# 网络上的经常失效，自己申请一个 Clound API Key 来用吧，每个月 50 万字符免费，够用了
+一个简单的翻译api（基于Google Cloud Translation API）,网上破解网页版的经常失效，自己便申请一个 api 用了
 
 # 设置 google-api 权限
 
@@ -33,3 +32,12 @@ $env:GOOGLE_APPLICATION_CREDENTIALS="auth_key/auth_key.json"
 set GOOGLE_APPLICATION_CREDENTIALS="auth_key/auth_key.json"
 ```
 
+## 以上环境变量，直接在 config.json 中设置就好了
+
+```
+{
+    "project_id": "root-cortex-366515",
+    "auth_key": "G:/workspace/git-repos/translate/auth_key/auth_key.json"
+}
+
+```

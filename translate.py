@@ -8,25 +8,51 @@ from os import environ
 from google.cloud import translate_v2 as _translate
 from libs.common.singleton import Singleton
 from libs.common.utils.path_helper import PathHelper
+from libs.common.utils.config import load_config
 
 import click
-import json
+import socks
+import socket
 
 kPath = PathHelper(__file__)
+kConfig = load_config(kPath.get_path("config.json"))
+
+kProtoTypes = {
+    'socks5': socks.SOCKS5,
+    'socks4': socks.SOCKS4,
+    'http': socks.HTTP,
+}
 
 
 class Translate(Singleton):
     def __init__(self, *args, **kwargs):
+        self.init_proxy()
         self.init_auth()
         self.project_id = environ.get("PROJECT_ID", "")
         self.parent = f"projects/{self.project_id}"
         self.client = _translate.Client()
 
     def init_auth(self):
-        with open(kPath.get_path("config.json"), "r") as f:
-            config_data = json.load(f)
-            environ["GOOGLE_APPLICATION_CREDENTIALS"] = config_data.get("auth_key", "")
-            environ["PROJECT_ID"] = config_data.get("project_id", "")
+        environ["GOOGLE_APPLICATION_CREDENTIALS"] = kConfig.get("auth_key", "")
+        environ["PROJECT_ID"] = kConfig.get("project_id", "")
+
+    def init_proxy(self):
+        import re
+        if proxy := kConfig.get('proxy'):
+            pattern = r"((?P<proto>\w+)://)?(?P<ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(:(?P<port>\d+))?"
+            if not (m := re.match(pattern, proxy)):
+                raise Exception(f'invalid proxy: {proxy}')
+            proto = m.group('proto')
+            ip = m.group('ip')
+            port = m.group('port')
+            if proto in kProtoTypes:
+                socks.set_default_proxy(kProtoTypes[proto], ip, int(port))
+            else:
+                raise Exception(f'unsupported proxy protocol: {proto}')
+            socket.socket = socks.socksocket
+            # print(f'use proxy: {proxy}')
+            # import traceback
+            # traceback.print_stack()
 
     def translate(self, text, target_language_code, **kwargs):
         """Translates text into the target language.
