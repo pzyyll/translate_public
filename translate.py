@@ -14,9 +14,12 @@ import click
 import socks
 import socket
 import codecs
+import logging
 
 kPath = PathHelper(__file__)
 kConfig = load_config(kPath.get_path("config.json"))
+
+logging.basicConfig(filename=kPath.get_path("output.log"), encoding='utf-8', level=logging.DEBUG)
 
 kProtoTypes = {
     'socks5': socks.SOCKS5,
@@ -104,6 +107,7 @@ def cli(**kwargs):
 # @click.pass_context
 def translate(text, target, model, print_format):
     # print('translate', text, target, model, type(print_format))
+    logging.info(f'translate {text} {target} {model} {print_format}')
     if not target:
         detect_lang = Translate().detect_language(text)
         target = 'en' if 'zh' in detect_lang else 'zh-CN'
