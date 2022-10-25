@@ -13,6 +13,7 @@ from libs.common.utils.config import load_config
 import click
 import socks
 import socket
+import codecs
 
 kPath = PathHelper(__file__)
 kConfig = load_config(kPath.get_path("config.json"))
@@ -96,19 +97,27 @@ def cli(**kwargs):
 @click.option('--text')
 @click.option('--target', default=None, help="translate target language")
 @click.option('--model', default=None, help="translate ai model e.g. \"nmt\"")
+@click.option(
+    '--print_format',
+    default="{input}\n{translatedText}",
+    help="print format-string. {input|translatedText|detectedSourceLanguage}")
 # @click.pass_context
-def translate(text, target, model):
-    # print('translate', text, target, model)
+def translate(text, target, model, print_format):
+    # print('translate', text, target, model, type(print_format))
     if not target:
         detect_lang = Translate().detect_language(text)
         target = 'en' if 'zh' in detect_lang else 'zh-CN'
     result = Translate().translate(text, target, model=model)
-    print(result['input'])
-    print(result['translatedText'])
+
+    # raw string will not print "\n"
+    print(codecs.decode(print_format, "unicode_escape").format(**result))
+    # print(result['input'])
+    # print(result['translatedText'])
 
 @cli.command()
 def list_languages():
     Translate().list_languages()
+
 
 if __name__ == "__main__":
     cli()
