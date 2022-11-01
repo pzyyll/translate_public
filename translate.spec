@@ -8,7 +8,7 @@ a = Analysis(
     ['translate.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('resource/*', 'resource')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

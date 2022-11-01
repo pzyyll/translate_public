@@ -17,7 +17,7 @@ import codecs
 import logging
 
 kPath = PathHelper(__file__)
-kConfig = load_config(kPath.get_path("config.json"))
+kConfig = {}   # load_config(kPath.get_path("config.json"))
 
 logging.basicConfig(filename=kPath.get_path("output.log"), encoding='utf-8', level=logging.DEBUG)
 
@@ -93,8 +93,11 @@ class Translate(Singleton):
 
 @click.group()
 # @click.pass_context
-def cli(**kwargs):
-    pass
+@click.option('--config', default=kPath.get_path("config.json"), help='config file')
+def cli(config):
+    global kConfig
+    kConfig = load_config(kPath.get_cwd_path(config))
+
 
 @cli.command()
 @click.option('--text')
@@ -118,10 +121,25 @@ def translate(text, target, model, print_format):
     # print(result['input'])
     # print(result['translatedText'])
 
+
 @cli.command()
 def list_languages():
     Translate().list_languages()
 
+
+@cli.command()
+def test():
+    import sys, os
+    print(getattr(sys, '_MEIPASS', None))
+    print(os.path.abspath(os.path.dirname(__file__)))
+
+    print(kPath.exec_path)
+    if getattr(sys, 'frozen', False):
+        print(sys.executable)
+
+    print(sys.argv)
+    print(os.getcwd())
+    print(kPath.get_cwd_path(''))
 
 if __name__ == "__main__":
     cli()

@@ -3,6 +3,7 @@
 # @Description: test
 
 import unittest
+import openpyxl
 
 from api.baidu_api import BaiduApiClient
 from libs.common.utils.config import load_config
@@ -23,6 +24,3 @@ class TestApi(unittest.TestCase):
         result = self.baidu_api.detect_language(text)
         self.assertEqual(result, 'zh')
 
-
-if __name__ == '__main__':
-    unittest.main()
