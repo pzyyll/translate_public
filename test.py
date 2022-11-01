@@ -18,6 +18,11 @@ class TestApi(unittest.TestCase):
         result = self.baidu_api.translate(text)
         self.assertEqual(result, 'Hello')
 
+    def test_baidu_api_detect(self):
+        text = '你好'
+        result = self.baidu_api.detect_language(text)
+        self.assertEqual(result, 'zh')
+
 
 if __name__ == '__main__':
     unittest.main()
