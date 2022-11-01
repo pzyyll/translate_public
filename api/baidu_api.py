@@ -5,7 +5,7 @@
 import random
 import hashlib
 import requests
-from base_api import BaseApi
+from .base_api import BaseApi
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded'}
 API_HOST = 'https://fanyi-api.baidu.com/api/trans/vip/'
@@ -67,8 +67,8 @@ class BaiduApiClient(BaseApi):
 if __name__ == '__main__':
     conf = {
         "baidu": {
-            "app_id": "20200829000554481",
-            "auth_key": "l1zd7pWC4ABUdIBooRv6"
+            "app_id": "123456789",
+            "auth_key": "███████████████████████████"
         }
     }
     client = BaiduApiClient(conf)
