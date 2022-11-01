@@ -1,5 +1,10 @@
 {
-    "project_id": "root-cortex-366515",
-    "auth_key": "C:\\Users\\czllo\\OneDrive\\App\\root-cortex-366515-91a4c07411e6.jso",
-    "proxy": "socks5://127.0.0.1:1081"
+    "google": {
+        "project_id": "your_google_project_id",
+        "auth_key": "your_google_auth_key_json_file_path"
+    },
+    "baidu": {
+        "app_id": "your_baidu_app_id",
+        "auth_key": "your_baidu_auth_key"
+    }
 }
