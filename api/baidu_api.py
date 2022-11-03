@@ -5,7 +5,7 @@
 import random
 import hashlib
 import requests
-from .base_api import BaseApi
+from .base_api import BaseAPI
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded'}
 API_HOST = 'https://fanyi-api.baidu.com/api/trans/vip/'
@@ -13,7 +13,7 @@ DETECT = 'language'
 TRANSLATE = 'translate'
 
 
-class BaiduApiClient(BaseApi):
+class BaiduAPI(BaseAPI):
     def __init__(self, conf):
         baidu_data = conf.get('baidu', {})
         self.app_id = baidu_data.get('app_id', '')
@@ -35,10 +35,12 @@ class BaiduApiClient(BaseApi):
         result = r.json()
         return None if result.get('error_code') else result.get('data').get('src')
 
-    def translate(self, text, params=None):
-        params = params or {}
-        from_language = params.get('from', 'auto')
-        to_language = params.get('to', 'auto')
+    def translate(self, data=None):
+        data = data or {}
+        text = data.get('text', '')
+
+        from_language = data.get('from', 'auto')
+        to_language = data.get('to', 'auto')
         if to_language == 'auto':
             src_language = self.detect_language(text)
             to_language = 'en' if src_language == 'zh' else 'zh'
@@ -46,22 +48,25 @@ class BaiduApiClient(BaseApi):
         salt = self._make_salt()
         sign = self._make_sign(text, salt)
         url_params = {
-            'appid': self.app_id, 
-            'q': text, 
-            'from': from_language, 
-            'to': to_language, 
+            'appid': self.app_id,
+            'q': text,
+            'from': from_language,
+            'to': to_language,
             'salt': salt, 'sign': sign
-            }
+        }
         url = API_HOST + TRANSLATE
         r = requests.post(url, params=url_params, headers=HEADERS)
         result = r.json()
         if result.get('error_code'):
             # print('translate error: {}'.format(result.get('error_msg')))
             return None
-        return '\n'.join([trans.get('dst') for trans in result.get('trans_result')])
+        input = text
+        translate_text = '\n'.join([trans.get('dst') for trans in result.get('trans_result')])
+        return {'input': input, 'translate': translate_text}
 
-    def list_language(self):
-        return super().list_language()
+    def list_languages(self):
+        print('baidu api not support list language')
+        return None
 
 
 if __name__ == '__main__':
@@ -71,7 +76,7 @@ if __name__ == '__main__':
             "auth_key": "███████████████████████████"
         }
     }
-    client = BaiduApiClient(conf)
+    client = BaiduAPI(conf)
     print(client.detect_language('Hello World! This is 1st paragraph.\nThis is 2nd paragraph.'))
     print(client.translate('Hello World! This is 1st paragraph.\nThis is 2nd paragraph.'))
     print(client.translate('你好，世界！这是第一段。\n这是第二段。'))

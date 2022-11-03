@@ -2,16 +2,32 @@
 # @Date: "2022-11-01"
 # @Description: base api
 
+import abc
 
-class BaseApi(object):
+
+class TranslateError(Exception):
+    pass
+
+
+class BaseAPI(abc.ABC):
     def __init__(self, conf):
         pass
 
+    @abc.abstractmethod
     def detect_language(self, text):
         pass
 
-    def translate(self, text, params=None):
+    @abc.abstractmethod
+    def translate(self, data=None):
+        """_summary_
+        Args:
+            data (_type_, optional): _description_. Defaults to None
+        Returns:
+            _type_: _description_
+            {'input': "你好", 'translate': "hello"}
+        """
         pass
 
-    def list_language(self):
+    @abc.abstractmethod
+    def list_languages(self):
         pass

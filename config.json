@@ -6,5 +6,6 @@
     "baidu": {
         "app_id": "your_baidu_app_id",
         "auth_key": "your_baidu_auth_key"
-    }
+    },
+    "proxy": "socks5://127.0.0.1:1081"
 }
