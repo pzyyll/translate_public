@@ -117,7 +117,9 @@ def translate(text, target, model, print_format):
     result = Translate().translate(text, target, model=model)
 
     # raw string will not print "\n"
-    print(codecs.decode(print_format, "unicode_escape").format(**result))
+    import html
+    print(codecs.decode(print_format, "unicode_escape").format(
+        input=result['input'], translatedText=html.unescape(result['translatedText'])))
     # print(result['input'])
     # print(result['translatedText'])
 
