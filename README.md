@@ -36,8 +36,10 @@ set GOOGLE_APPLICATION_CREDENTIALS="auth_key/auth_key.json"
 
 ```
 {
-    "project_id": "root-cortex-366515",
-    "auth_key": "G:/workspace/git-repos/translate/auth_key/auth_key.json"
+    "google": {
+        "project_id": "your_google_project_id",
+        "auth_key": "your_google_auth_key_json_file_path"
+    }
 }
 
 ```
