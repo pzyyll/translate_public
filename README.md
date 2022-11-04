@@ -41,3 +41,8 @@ set GOOGLE_APPLICATION_CREDENTIALS="auth_key/auth_key.json"
 }
 
 ```
+
+## 快速Build
+
+- 先执行 install_deps.bat 安装依赖库
+- 执行 build.bat 编译
