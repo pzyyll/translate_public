@@ -6,16 +6,9 @@
 from os import environ
 from google.cloud import translate_v2 as _translate
 
-import socks
 import six
 import html
 import logging
-
-kProtoTypes = {
-    'socks5': socks.SOCKS5,
-    'socks4': socks.SOCKS4,
-    'http': socks.HTTP,
-}
 
 
 class GoogleAPI(object):
@@ -60,7 +53,7 @@ class GoogleAPI(object):
         # print(u"Text: {}".format(result["input"]))
         # print(u"Translation: {}".format(result["translatedText"]))
         # print(u"Detected source language: {}".format(result["detectedSourceLanguage"]))
-        logging.debug('text: {}, params: {}'.format(text, params))
+        logging.debug(f'text: {text}, params: {params}')
         result = self.client.translate(text, **params)
         input_text = result.get("input", "")
         translated_text = html.unescape(result.get('translatedText'))

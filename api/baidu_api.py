@@ -22,7 +22,7 @@ class BaiduAPI(BaseAPI):
     def _make_sign(self, query, salt):
         sign = self.app_id + query + str(salt) + self.auth_key
         return hashlib.md5(sign.encode('utf-8')).hexdigest()
-    
+
     def _make_salt(self):
         return random.randint(0xffff, 0xffffffff)
 
@@ -60,9 +60,8 @@ class BaiduAPI(BaseAPI):
         if result.get('error_code'):
             # print('translate error: {}'.format(result.get('error_msg')))
             return None
-        input = text
         translate_text = '\n'.join([trans.get('dst') for trans in result.get('trans_result')])
-        return {'input': input, 'translate': translate_text}
+        return {'input': text, 'translate': translate_text}
 
     def list_languages(self):
         print('baidu api not support list language')
