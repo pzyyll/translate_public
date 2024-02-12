@@ -31,7 +31,7 @@ class BaiduAPI(BaseAPI):
         sign = self._make_sign(text, salt)
         params = {'appid': self.app_id, 'q': text, 'salt': salt, 'sign': sign}
         url = API_HOST + DETECT
-        r = requests.post(url, params=params, headers=HEADERS)
+        r = requests.post(url, params=params, headers=HEADERS, timeout=10)
         result = r.json()
         return None if result.get('error_code') else result.get('data').get('src')
 
@@ -55,7 +55,7 @@ class BaiduAPI(BaseAPI):
             'salt': salt, 'sign': sign
         }
         url = API_HOST + TRANSLATE
-        r = requests.post(url, params=url_params, headers=HEADERS)
+        r = requests.post(url, params=url_params, headers=HEADERS, timeout=10)
         result = r.json()
         if result.get('error_code'):
             # print('translate error: {}'.format(result.get('error_msg')))

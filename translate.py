@@ -4,17 +4,20 @@
 # https://github.com/googleapis/python-translate/blob/HEAD/samples/snippets/snippets.py
 
 
+import socket
+import codecs
+import functools
+import logging
+import sys
+import os
+
+import socks
+import click
+
 from libs.common.utils.path_helper import PathHelper
 from libs.common.utils.config import load_config
 from api.google_api import GoogleAPI
 from api.baidu_api import BaiduAPI
-
-import click
-import socks
-import socket
-import codecs
-import logging
-import functools
 
 kPath = PathHelper(__file__)
 kConfig = {}   # load_config(kPath.get_path("config.json"))
@@ -65,7 +68,7 @@ _translate_client = None  # GoogleAPI(kConfig)
 def cli(config, api, proxy):
     global kConfig
     global _translate_client
-    kConfig = load_config(kPath.get_cwd_path(config))
+    kConfig = load_config(kPath.get_path(config))
 
     if proxy := proxy or kConfig.get('proxy', ''):
         init_proxy(proxy)
@@ -92,7 +95,7 @@ def cli(config, api, proxy):
 @except_log
 def translate(text, target, model, print_format):
     # print('translate', text, target, model, type(print_format))
-    logging.info(f'translate {text} {target} {model} {print_format}')
+    logging.info('translate %s %s %s %s', text, target, model, print_format)
     data = {"from": "auto", "to": target or "auto", "model": model, "text": text}
 
     result = _translate_client.translate(data)
@@ -106,9 +109,7 @@ def list_languages():
     _translate_client.list_languages()
 
 
-@cli.command()
-def test():
-    import sys, os
+def _test():
     print(getattr(sys, '_MEIPASS', None))
     print(os.path.abspath(os.path.dirname(__file__)))
 
@@ -120,5 +121,11 @@ def test():
     print(os.getcwd())
     print(kPath.get_cwd_path(''))
 
+
+@cli.command()
+def test():
+    _test()
+
 if __name__ == "__main__":
     cli()
+
