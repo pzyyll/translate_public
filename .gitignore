@@ -133,3 +133,7 @@ dmypy.json
 temp/
 
 dev_config.json
+
+.DS_Store
+
+*/~$*
