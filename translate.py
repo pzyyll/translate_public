@@ -14,10 +14,12 @@ import os
 import socks
 import click
 
-from libs.common.utils.path_helper import PathHelper
-from libs.common.utils.config import load_config
+from mako.template import Template
 from api.google_api import GoogleAPI
 from api.baidu_api import BaiduAPI
+from libs.common.utils.path_helper import PathHelper
+from libs.common.utils.config import load_config
+
 
 kPath = PathHelper(__file__)
 kConfig = {}   # load_config(kPath.get_path("config.json"))
@@ -90,17 +92,30 @@ def cli(config, api, proxy):
 @click.option(
     '--print_format',
     default="{input}\n{translate}",
-    help="print format-string. {input|translatedText|detectedSourceLanguage}")
+    help="print format-string. {input|translate|html}")
 # @click.pass_context
 @except_log
 def translate(text, target, model, print_format):
     # print('translate', text, target, model, type(print_format))
     logging.info('translate %s %s %s %s', text, target, model, print_format)
-    data = {"from": "auto", "to": target or "auto", "model": model, "text": text}
+    data = {
+        "from": "auto",
+        "to": target or "auto",
+        "model": model,
+        "text": text
+    }
 
     result = _translate_client.translate(data)
-    print(codecs.decode(print_format, "unicode_escape").format(
-        input=result['input'], translate=result['translate']))
+    if print_format == "html":
+        htmlfile = kPath.get_path("resources/index.html")
+        if not kPath.is_local_path(htmlfile):
+            htmlfile = kPath.get_resource_path("resources/index.html")
+        tmp = Template(filename=htmlfile)
+        print(tmp.render(input=result['input'], translate=result['translate']))
+    else:
+        print(
+            codecs.decode(print_format, "unicode_escape").format(
+                input=result['input'], translate=result['translate']))
 
 
 @cli.command()
@@ -128,4 +143,3 @@ def test():
 
 if __name__ == "__main__":
     cli()
-
