@@ -1,0 +1,8 @@
+flake8
+google-cloud-translate
+PySocks
+requests
+six
+flask
+pycryptodome
+python-dotenv

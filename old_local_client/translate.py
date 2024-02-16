@@ -64,7 +64,7 @@ _translate_client = None  # GoogleAPI(kConfig)
 
 @click.group()
 # @click.pass_context
-@click.option('--config', default=kPath.get_path("config.json"), help='config file')
+@click.option('--config', default="config.json", help='config file')
 @click.option('--api', default='google', help='support "google", "baidu"')
 @click.option('--proxy', default='', help='proxy, e.g. socks5://127.0.0.1:1081')
 def cli(config, api, proxy):

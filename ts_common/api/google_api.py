@@ -3,19 +3,22 @@
 # @Description: google translate api
 
 
-from os import environ
-from google.cloud import translate_v2 as _translate
-
 import six
 import html
 import logging
 
+from os import environ
+from google.cloud import translate_v2 as _translate
+from .base_api import BaseAPI
 
-class GoogleAPI(object):
+
+class GoogleAPI(BaseAPI):
     def __init__(self, conf):
+        super(GoogleAPI, self).__init__(conf)
         google_data = conf.get('google', {})
         self.project_id = google_data.get('project_id', '')
         self.auth_key = google_data.get('auth_key', '')
+        self.proxy = google_data.get('proxy', '')
         self.parent = f"projects/{self.project_id}"
 
         self.init_auth()
@@ -25,7 +28,7 @@ class GoogleAPI(object):
         environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.auth_key
         environ["PROJECT_ID"] = self.project_id
 
-    def translate(self, data=None):
+    def _translate(self, data=None):
         """Translates text into the target language.
         Target must be an ISO 639-1 language code.
         See https://g.co/cloud/translate/v2/translate-reference#supported_languages
@@ -59,14 +62,14 @@ class GoogleAPI(object):
         translated_text = html.unescape(result.get('translatedText'))
         return {'input': input_text, 'translate': translated_text}
 
-    def list_languages(self):
+    def _list_languages(self):
         """Lists all available languages."""
         result = self.client.get_languages()
         for language in self.client.get_languages():
             print(u"{name} ({language})".format(**language))
         return result
 
-    def detect_language(self, text):
+    def _detect_language(self, text):
         """Detects the text's language."""
         # Text can also be a sequence of strings, in which case this method
         # will return a sequence of results for each text.

@@ -15,6 +15,7 @@ TRANSLATE = 'translate'
 
 class BaiduAPI(BaseAPI):
     def __init__(self, conf):
+        super(BaiduAPI, self).__init__(conf)
         baidu_data = conf.get('baidu', {})
         self.app_id = baidu_data.get('app_id', '')
         self.auth_key = baidu_data.get('auth_key', '')
@@ -26,7 +27,7 @@ class BaiduAPI(BaseAPI):
     def _make_salt(self):
         return random.randint(0xffff, 0xffffffff)
 
-    def detect_language(self, text):
+    def _detect_language(self, text):
         salt = self._make_salt()
         sign = self._make_sign(text, salt)
         params = {'appid': self.app_id, 'q': text, 'salt': salt, 'sign': sign}
@@ -35,7 +36,7 @@ class BaiduAPI(BaseAPI):
         result = r.json()
         return None if result.get('error_code') else result.get('data').get('src')
 
-    def translate(self, data=None):
+    def _translate(self, data=None):
         data = data or {}
         text = data.get('text', '')
 
@@ -63,7 +64,7 @@ class BaiduAPI(BaseAPI):
         translate_text = '\n'.join([trans.get('dst') for trans in result.get('trans_result')])
         return {'input': text, 'translate': translate_text}
 
-    def list_languages(self):
+    def _list_languages(self):
         print('baidu api not support list language')
         return None
 
