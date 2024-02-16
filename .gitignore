@@ -144,3 +144,5 @@ ts_client/resources
 ts_client/ts_common
 ts_server/resources
 ts_server/ts_common
+
+auth
