@@ -10,13 +10,22 @@ from utils import path_helper, get_flask_env
 
 from ts_common.api.proxy_api import ProxyAPIs
 from ts_common.external_libs.pyhelper.utils.config import Config
+from ts_common.external_libs.pyhelper.singleton import singleton
 
 from app.api import api
-from app.admin.routes import jwt_check
+from app.admin.auth_check import jwt_check
 
 logger = logging.getLogger(__name__)
 gl_config = Config(path_helper.get_path(get_flask_env("TS_CONFIG_FILE", "config.json")))
-gl_proxy_apis = ProxyAPIs(gl_config)
+
+@singleton
+class GlobalProxyAPIs(ProxyAPIs):
+    pass
+
+
+gl_proxy_apis = GlobalProxyAPIs(gl_config)
+
+
 logger.debug('gl_proxy_apis: %s', gl_proxy_apis)
 
 

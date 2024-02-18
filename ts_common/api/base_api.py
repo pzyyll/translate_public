@@ -70,6 +70,16 @@ class BaseAPI(abc.ABC):
     def _detect_language(self, text):
         pass
 
+    def translate_text(self, text : str, to_lang="auto", from_lang="auto", model="nmt", **kwargs):
+        data = {
+            "from": from_lang,
+            "to": to_lang,
+            "model": model,
+            "text": text,
+            **kwargs
+        }
+        return self.translate(data)
+
     def translate(self, data=None):
         with Proxy(self.proxy):
             return self._translate(data)

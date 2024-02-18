@@ -150,3 +150,5 @@ auth
 logs
 
 config.py
+
+**/flask_session
