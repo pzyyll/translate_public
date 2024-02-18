@@ -41,7 +41,7 @@ class TranslateClient(BaseAPI):
     def init(self, conf):
         super(TranslateClient, self).init(conf)
         self._user = conf.get('user', None)
-        self._identify_key = conf.get('identify_key', None)
+        self._api_token = conf.get('api_token', None)
         self._url = conf.get('url', None)
         self._log_level = conf.get('log_level', 'DEBUG')
         self._log_file = conf.get('log_file', kPath.get_path('./ts_client.log'))
@@ -56,7 +56,7 @@ class TranslateClient(BaseAPI):
         post_data = {
             "data": data,
             "user": self._user,
-            "sign": "123456",
+            "token": self._api_token,
         }
         rsp = requests.post(urljoin(self._url, QueryCmd.TRANSLATE), json=post_data, timeout=10)
         return rsp.json().get('result', {})

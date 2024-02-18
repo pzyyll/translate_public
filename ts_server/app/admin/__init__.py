@@ -9,7 +9,7 @@ from app import app, db
 from app.models import User
 
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint('admin_view', __name__, url_prefix='/admin')
 admin_view = Admin(name='Dashboard', template_mode='bootstrap4')
 
 

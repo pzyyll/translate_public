@@ -138,7 +138,7 @@ dev_config.json
 
 */~$*
 
-*/dev_*.conf
+**/dev_*.conf
 
 ts_client/resources
 ts_client/ts_common

@@ -8,6 +8,7 @@ flask-admin
 flask-sqlalchemy
 flask-login
 flask-wtf
+PyJWT
 pycryptodome
 python-dotenv
 captcha

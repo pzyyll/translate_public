@@ -32,7 +32,6 @@ from app.admin import admin_bp
 app.register_blueprint(admin_bp)
 
 with app.app_context():
-    print("create db")
     db.create_all()
 
     from app.models import User
