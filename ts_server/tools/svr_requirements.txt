@@ -4,5 +4,10 @@ PySocks
 requests
 six
 flask
+flask-admin
+flask-sqlalchemy
+flask-login
+flask-wtf
 pycryptodome
 python-dotenv
+captcha

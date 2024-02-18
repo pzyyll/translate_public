@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TOOLS_DIR="$(readlink -f $(dirname $0))"
-PROJECT_DIR="$(realpath $TOOLS_DIR/..)"
+PROJECT_DIR="$(realpath $TOOLS_DIR/../..)"
 SVR_DIR="$PROJECT_DIR/ts_server"
 DEPS_REQUIREMENTS_FILE="$TOOLS_DIR/svr_requirements.txt"
 

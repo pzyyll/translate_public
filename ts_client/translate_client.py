@@ -14,7 +14,7 @@ import click
 from mako.template import Template
 from ts_common.api.base_api import BaseAPI
 from ts_common.external_libs.pyhelper.utils.path_helper import PathHelper
-from ts_common.external_libs.pyhelper.utils.config import load_config
+from ts_common.external_libs.pyhelper.utils.config import Config
 
 
 class QueryCmd(object):
@@ -69,7 +69,7 @@ _translate_client = TranslateClient({})
 @click.option('--proxy', default='', help='proxy, e.g. socks5://127.0.0.1:1081')
 @click.option('--config', default="ts_client.conf", help='config file')
 def cli(proxy, config):
-    conf = load_config(kPath.get_path(config))
+    conf = Config(kPath.get_path(config))
     logging.basicConfig(
         filename=kPath.get_path(conf.get('log_file', './ts_client.log')),
         encoding='utf-8',
@@ -102,9 +102,7 @@ def translate(text, target, model, print_format, api):
 
     result = _translate_client.translate(data)
     if print_format == "html":
-        htmlfile = kPath.get_path("../resources/index.html")
-        if not kPath.is_local_path(htmlfile):
-            htmlfile = kPath.get_resource_path("../resources/index.html")
+        htmlfile = kPath.get_resource_path("./resources/index.html")
         tmp = Template(filename=htmlfile)
         print(tmp.render(input=result['input'], translate=result['translate']))
     else:

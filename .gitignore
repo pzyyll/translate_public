@@ -148,3 +148,5 @@ ts_server/ts_common
 auth
 
 logs
+
+config.py
