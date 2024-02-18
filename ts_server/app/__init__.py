@@ -38,7 +38,7 @@ with app.app_context():
     if User.query.filter_by(username="test").first() is None:
         print("create test user")
         user = User(username="test")
-        user.set_passwd("test")
+        user.set_passwd("Zaq12wsx@0")
         db.session.add(user)
         db.session.commit()
 

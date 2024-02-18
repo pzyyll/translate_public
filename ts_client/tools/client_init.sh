@@ -50,7 +50,7 @@ build() {
     source .venv/bin/activate
 
     if [ ! -f ./ts_client.spec ] ; then 
-        pyi-makespec --onefile --name ts_client translate_client.py
+        pyi-makespec --add-data "resources/*:resources" --onefile --name ts_client translate_client.py
     fi
 
     pyinstaller --clean ./ts_client.spec
