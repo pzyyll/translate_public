@@ -4,81 +4,92 @@
 
 from collections import OrderedDict
 
-from .base_api import BaseAPI, TranslateError
+from .base_api import ProxyAwareTranslateAPI, TranslateError
 from .google_api import GoogleAPI
 from .baidu_api import BaiduAPI
 
 
-class ProxyAPIs(BaseAPI):
+class ApiTypeContext(object):
+    def __init__(self, api, api_type):
+        self.api_type = api_type
+        self.api = api
+
+    def __enter__(self):
+        self.api.set_api_type(self.api_type)
+        return self.api
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.api.set_api_type(None)
+
+
+class ProxyAPIs(ProxyAwareTranslateAPI):
     GOOGLE = 'google'
     BAIDU = 'baidu'
-    AUTO = 'auto'
     
     API_TYPE = OrderedDict({
         GOOGLE: GoogleAPI,
         BAIDU: BaiduAPI
     })
 
-    def __init__(self, conf):
-        super(ProxyAPIs, self).__init__(conf)
-        self._apis = OrderedDict({})
-        self._default_api = None
-        self.init(conf)
+    @property
+    def _default_api(self):
+        return self._apis.get(self.api_type, None)
 
     def init(self, conf):
-        self._apis.clear()
+        super(ProxyAPIs, self).init(conf)
+        self._apis = OrderedDict({})
+        self.last_translate_api_type = None
         for api_type, api_class in self.API_TYPE.items():
-            self._apis[api_type] = api_class(conf)
+            self._apis[api_type] = api_class(conf.get(api_type, {}))
 
     def set_api_type(self, api_type=None):
-        if not api_type and self._default_api:
-            self._default_api = None
-            return
-        
-        if api_type not in self._apis:
-            return
+        super(ProxyAPIs, self).set_api_type(None)
+        if api_type and api_type not in self._apis:
+            raise ValueError('Invalid API type.')
 
-        if api_type in self._apis:
-            self._default_api = self._apis[api_type]
+    def api_type_context(self, api_type):
+        return ApiTypeContext(self, api_type)
 
-    def _detect_language(self, text):
+    def _detect_language(self, text, **kwargs):
         if self._default_api:
             try:
-                return self._default_api.detect_language(text)
+                return self._default_api.detect_language(text, **kwargs)
             except Exception as exc:
                 raise TranslateError('Default API failed to detect language.') from exc
 
         for _, api in self._apis.items():
             try:
-                return api.detect_language(text)
+                return api.detect_language(text, **kwargs)
             except Exception:
                 continue
         raise TranslateError('All APIs failed to detect language.')
 
-    def _translate(self, data=None):
+    def _translate_text(self, text, to_lang=None, **kwargs):
         if self._default_api:
             try:
-                return self._default_api.translate(data)
+                return self._default_api.translate_text(text, to_lang, **kwargs)
             except Exception as exc:
                 raise TranslateError('Default API failed to translate text.') from exc
 
-        for _, api in self._apis.items():
+        for api_type, api in self._apis.items():
             try:
-                return api.translate(data)
+                reusult = api.translate_text(text, to_lang, **kwargs)
+                self.last_translate_api_type = api_type
+                return reusult
             except Exception:
                 continue
         raise TranslateError('All APIs failed to translate text.')
 
-    def _list_languages(self):
+    def _list_languages(self, display_language_code=None):
         if self._default_api:
             try:
-                return self._default_api.list_languages()
+                return self._default_api.list_languages(display_language_code)
             except Exception as exc:
                 raise TranslateError('Default API failed to list languages.') from exc
 
         for api in self._apis.items():
             try:
-                return api.list_languages()
+                return api.list_languages(display_language_code)
             except Exception:
                 continue
         raise TranslateError('All APIs failed to list languages.')

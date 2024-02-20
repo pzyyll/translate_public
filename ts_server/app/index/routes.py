@@ -36,7 +36,7 @@ def translate_process_text():
     # 这里可以加入你想要的任何处理逻辑
     try:
         result = gl_proxy_apis.translate_text(text)
-        processed_text = result.get('translate') or text
+        processed_text = result.get('translate_text') or text
         logger.debug('processed_text: %s', result)
     except Exception as exc:
         processed_text = text

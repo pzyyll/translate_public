@@ -3,115 +3,115 @@
 # @Description: base api
 
 import abc
-import socks
-import socket
+
+from typing import TypedDict, List
+from ts_common.external_libs.pyhelper.utils.proxy_helper import Proxy
 
 
 class TranslateError(Exception):
     pass
 
 
-class Proxy(object):
-    PROTO_TYPE = {
-        'socks5': socks.SOCKS5,
-        'socks4': socks.SOCKS4,
-        'http': socks.HTTP,
-    }
-
-    def __init__(self, proxy) -> None:
-        self.proxy = proxy
-        self._tmp_socket = None
-
-    def init_proxy(self):
-        if not self.proxy:
-            return
-        import re
-        pattern = r"((?P<proto>\w+)://)?(?P<ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})(:(?P<port>\d+))?"
-        if not (m := re.match(pattern, self.proxy)):
-            raise Exception(f'invalid proxy: {self.proxy}')
-        proto = m.group('proto')
-        ip = m.group('ip')
-        port = m.group('port')
-        if proto in self.PROTO_TYPE:
-            socks.set_default_proxy(self.PROTO_TYPE[proto], ip, int(port))
-        else:
-            raise Exception(f'unsupported proxy protocol: {proto}')
-        self._tmp_socket = socket.socket
-        socket.socket = socks.socksocket
-
-    def __enter__(self):
-        if self.proxy:
-            self.init_proxy()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.proxy and self._tmp_socket:
-            socket.socket = self._tmp_socket
-            self.proxy = None
-            self._tmp_socket = None
+class DetectLanguage(TypedDict):
+    language_code: str
+    confidence: float
 
 
-class BaseAPI(abc.ABC):
-    API_TYPE = "BASE_API"
+class TranslateResult(TypedDict):
+    translate_text: str
+    detected_language_code: str
 
-    def __init__(self, conf):
-        self.proxy = None
+
+class Language(TypedDict):
+    display_name: str
+    language_code: str
+
+
+class TranslateAPIProto(abc.ABC):
+    @abc.abstractmethod
+    def detect_language(self, text, **kwargs) -> DetectLanguage:
+        '''
+        Detects the language of the given text using an external API.
+        
+        Parameters:
+        - text (str): The text for language detection.
+        - kwargs: Optional arguments, including 'mime_type' for specifying the MIME type of the text.
+        
+        Returns:
+        - dict: A dictionary containing the detected language code and the confidence level.
+            eg. {'language_code': "en", 'confidence': 0.9}
+        '''
+        pass
+
+    @abc.abstractmethod
+    def translate_text(self, text, to_lang=None, **kwargs) -> TranslateResult:
+        '''
+        Translate text to target language
+        Parameters:
+        - text (str): The text to be translated.
+        - to_lang (str): The target language code.
+        - kwargs: Optional arguments, including 'from_lang' for specifying the source language code.
+        Returns:
+        - dict: A dictionary containing the translated text and the detected language code.
+            eg. {'translate_text': translated_text, 'detected_language_code': "en"}
+        '''
+        pass
+
+    @abc.abstractmethod
+    def list_languages(self, display_language_code=None, **kwargs) -> List[Language]:
+        '''
+        Retrieves a list of supported languages from an external API.
+        
+        Parameters:
+        - display_language_code (str, optional):
+            If provided, the display names of the languages are included in the output.
+        
+        Returns:
+        - list:
+            A list of dictionaries, each representing a supported language.
+            Each dictionary includes a language code, and optionally,
+            a display name if display_language_code is provided.
+            eg. [{'display_name': "英语", 'language_code': "en"}]
+        '''
+        pass
+
+
+class ProxyAwareTranslateAPI(TranslateAPIProto):
+    def __init__(self, conf=None):
+        self.init(conf)
 
     def init(self, conf):
-        pass
+        self.api_type = None
+        self.proxy = None
+        self.conf = conf or {}
+        self.proxy = self.conf.get('proxy', None)
 
     def set_api_type(self, api_type=None):
-        pass
+        self.api_type = api_type
 
-    def detect_language(self, text):
+    def detect_language(self, text, **kwargs) -> DetectLanguage:
         with Proxy(self.proxy):
-            return self._detect_language(text)
+            return self._detect_language(text, **kwargs)
+    
+    def translate_text(self, text, to_lang=None, **kwargs) -> TranslateResult:
+        with Proxy(self.proxy):
+            return self._translate_text(text, to_lang, **kwargs)
+    
+    def list_languages(self, display_name_code=None, **kwargs) -> List[Language]:
+        with Proxy(self.proxy):
+            return self._list_languages(display_name_code, **kwargs)
 
     @abc.abstractmethod
-    def _detect_language(self, text):
+    def _detect_language(self, text, **kwargs) -> DetectLanguage:
+        '''实现 TranslateAPIProto.detect_language 的功能'''
         pass
 
-    def translate_text(self, text : str, to_lang="auto", from_lang="auto", model="nmt", **kwargs):
-        data = {
-            "from": from_lang,
-            "to": to_lang,
-            "model": model,
-            "text": text,
-            **kwargs
-        }
-        return self.translate(data)
-
-    def translate(self, data=None):
-        with Proxy(self.proxy):
-            return self._translate(data)
-
     @abc.abstractmethod
-    def _translate(self, data=None):
-        """_summary_
-        Args:
-            data: {key, optional}
-            各自翻译API需要的参数，如：
-                from: [auto, zh, en, ...],
-                to: [auto, zh, en, ...],
-                model: [nmt, base, ...],
-                text: "你好",
-                [todo other]: custom data,
-            e.g:
-            data = {
-                "from": "auto",
-                "to": "zh",
-                "model": "nmt",
-                "text": "hello"
-            }
-        Returns:
-            _type_: _description_
-            {'input': "你好", 'translate': "hello"}
-        """
+    def _translate_text(self, text, to_lang=None, **kwargs) -> TranslateResult:
+        '''实现 TranslateAPIProto.translate_text 的功能'''
         pass
 
-    def list_languages(self):
-        with Proxy(self.proxy):
-            return self._list_languages()
-
     @abc.abstractmethod
-    def _list_languages(self):
+    def _list_languages(self, display_language_code=None, **kwargs) -> List[Language]:
+        '''实现 TranslateAPIProto.list_languages 的功能'''
         pass

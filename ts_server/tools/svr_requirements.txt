@@ -15,3 +15,5 @@ pycryptodome
 python-dotenv
 captcha
 gunicorn
+protobuf
+pytest

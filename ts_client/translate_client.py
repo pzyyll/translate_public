@@ -5,6 +5,7 @@
 import codecs
 import functools
 import logging
+from typing import List
 
 from urllib.parse import urljoin
 import requests
@@ -12,7 +13,7 @@ import requests
 import click
 
 from mako.template import Template
-from ts_common.api.base_api import BaseAPI
+from ts_common.api.base_api import Language, TranslateAPIProto
 from ts_common.external_libs.pyhelper.utils.path_helper import PathHelper
 from ts_common.external_libs.pyhelper.utils.config import Config
 
@@ -37,32 +38,39 @@ def except_log(func):
     return wrapper
 
 
-class TranslateClient(BaseAPI):
+class TranslateClient(TranslateAPIProto):
     def init(self, conf):
-        super(TranslateClient, self).init(conf)
         self._user = conf.get('user', None)
         self._api_token = conf.get('api_token', None)
         self._url = conf.get('url', None)
         self._log_level = conf.get('log_level', 'DEBUG')
         self._log_file = conf.get('log_file', kPath.get_path('./ts_client.log'))
 
-    def _detect_language(self, text):
+    def detect_language(self, text, **kwargs):
         pass
 
-    def _list_languages(self):
+    def list_languages(self, display_language_code=None, **kwargs):
         pass
 
-    def _translate(self, data=None):
+    def translate_text(self, text, to_lang=None, **kwargs):
         post_data = {
-            "data": data,
+            "data": {"text": text,
+                     "target_lang_code": to_lang},
             "user": self._user,
             "token": self._api_token,
         }
-        rsp = requests.post(urljoin(self._url, QueryCmd.TRANSLATE), json=post_data, timeout=10)
-        return rsp.json().get('result', {})
+        rsp = None
+        try:
+            rsp = requests.post(urljoin(self._url, QueryCmd.TRANSLATE), json=post_data, timeout=10)
+            reuslt = rsp.json().get('result', {})
+            reuslt['api'] = rsp.json().get('from_api_type', "auto")
+            return reuslt
+        except Exception as e:
+            logging.error(f"translate_text error: {e}|{rsp}")
+            raise Exception(f"translate_text error: {e}|{rsp}")
 
 
-_translate_client = TranslateClient({}) 
+_translate_client = TranslateClient()
 
 
 @click.group()
@@ -92,23 +100,16 @@ def cli(proxy, config):
 def translate(text, target, model, print_format, api):
     # print('translate', text, target, model, type(print_format))
     logging.info('translate %s %s %s %s', text, target, model, print_format)
-    data = {
-        "from": "auto",
-        "to": target or "auto",
-        "model": model,
-        "text": text,
-        'api': api
-    }
 
-    result = _translate_client.translate(data)
+    result = _translate_client.translate_text(text, target)
     if print_format == "html":
         htmlfile = kPath.get_resource_path("./resources/index.html")
         tmp = Template(filename=htmlfile)
-        print(tmp.render(input=result['input'], translate=result['translate']))
+        print(tmp.render(input=text, translate=result['translate_text'], api=result['api']))
     else:
         print(
             codecs.decode(print_format, "unicode_escape").format(
-                input=result['input'], translate=result['translate']))
+                input=text, translate=result['translate_text']))
 
 
 @cli.command()

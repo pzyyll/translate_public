@@ -37,16 +37,10 @@ test_run() {
     python -m flask run --debug
 }
 
-run() {
-    cd $SVR_DIR || exit
-    source .venv/bin/activate
-    python -m flask run --host=
-}
-
 if [ "$1" == "init" ]; then
     init
 elif [ "$1" == "test_run" ]; then
-    run
+    test_run
 else
     echo "Usage: $0 {init|test_run}"
     exit 1
