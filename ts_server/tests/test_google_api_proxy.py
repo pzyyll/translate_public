@@ -22,7 +22,9 @@ google_api = GoogleAPIV3()
 google_api.init(conf['google'])
 
 def test_google_api_v3():
-    print(google_api.translate_text('hello', 'zh'))
+    result = google_api.translate_text('hello')
+
+    assert result.get('translate_text') == "你好"
 
 
 if __name__ == '__main__':

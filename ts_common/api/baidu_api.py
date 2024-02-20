@@ -37,7 +37,7 @@ class BaiduAPI(BaseAPI):
         r = requests.post(url, params=params, headers=HEADERS, timeout=10)
         result = r.json()
         try:
-            return {"detected_language_code": result.get('data').get('src')}
+            return {"language_code": result.get('data').get('src')}
         except Exception as e:
             logging.error(f"baidu api _detect_language error: {e}|{result}")
             raise Exception(f"baidu api _detect_language error: {e}|{result}")
@@ -54,7 +54,7 @@ class BaiduAPI(BaseAPI):
         from_lang = kwargs.get('from_lang', None)
         if not to_lang:
             if not from_lang:
-                from_lang = self.detect_language(text).get('detected_language_code', 'en')
+                from_lang = self.detect_language(text).get('language_code', 'en')
             to_lang = 'en' if 'zh' in from_lang else 'zh'
 
         salt = self._make_salt()
