@@ -98,14 +98,23 @@ init_systemd_service() {
 
     GUNI_BIN="$ENV_BIN_DIR/gunicorn"
 
-    sudo sed \
-        -e "s|{{WORKING_DIR}}|$WORK_DIR|g" \
-        -e "s|{{USER}}|$USER|g" \
-        -e "s|{{GROUP}}|$GROUP|g" \
-        -e "s|{{ENV_BIN_DIR}}|$ENV_BIN_DIR|g" \
-        -e "s|{{GUNI_BIN}}|$GUNI_BIN|g" \
-        -e "s|{{GUNI_CONFIG}}|$GUNI_CONFIG_FILE/|g" \
-        $SERVICE_TEMPLATE | sudo tee $SERVICE_FILE > /dev/null
+    cp $SERVICE_TEMPLATE $SERVICE_FILE
+
+    sudo sed -i "s|{{WORKING_DIR}}|$WORK_DIR|g" $SERVICE_FILE
+    sudo sed -i "s|{{USER}}|$USER|g" $SERVICE_FILE
+    sudo sed -i "s|{{GROUP}}|$GROUP|g" $SERVICE_FILE
+    sudo sed -i "s|{{ENV_BIN_DIR}}|$ENV_BIN_DIR|g" $SERVICE_FILE
+    sudo sed -i "s|{{GUNI_BIN}}|$GUNI_BIN|g" $SERVICE_FILE
+    sudo sed -i "s|{{GUNI_CONFIG}}|$GUNI_CONFIG_FILE|g" $SERVICE_FILE
+
+    # sudo sed \
+    #     -e "s|{{WORKING_DIR}}|$WORK_DIR|g" \
+    #     -e "s|{{USER}}|$USER|g" \
+    #     -e "s|{{GROUP}}|$GROUP|g" \
+    #     -e "s|{{ENV_BIN_DIR}}|$ENV_BIN_DIR|g" \
+    #     -e "s|{{GUNI_BIN}}|$GUNI_BIN|g" \
+    #     -e "s|{{GUNI_CONFIG}}|$GUNI_CONFIG_FILE/|g" \
+    #     $SERVICE_TEMPLATE | sudo tee $SERVICE_FILE > /dev/null
 }
 
 uninstall_service() {
