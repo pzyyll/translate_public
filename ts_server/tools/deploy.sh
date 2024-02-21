@@ -98,7 +98,7 @@ init_systemd_service() {
 
     GUNI_BIN="$ENV_BIN_DIR/gunicorn"
 
-    cp $SERVICE_TEMPLATE $SERVICE_FILE
+    sudo cp -f $SERVICE_TEMPLATE $SERVICE_FILE
 
     sudo sed -i "s|{{WORKING_DIR}}|$WORK_DIR|g" $SERVICE_FILE
     sudo sed -i "s|{{USER}}|$USER|g" $SERVICE_FILE
