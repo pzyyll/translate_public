@@ -84,16 +84,21 @@ init_gunicorn_config() {
         $GUNICORN_CONFIG_TEMPLATE > $GUNI_CONFIG_FILE
 }
 
+init_fask_config() {
+    cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
+}
+
+
 init_systemd_service() {
     if [ ! -d "/run/systemd/system" ]; then
         echo "Systemd not support!!!"
         exit 1
     fi
-    template_file_name=$(basename $SERVICE_TEMPLATE)
-    service_file_name="${template_file_name%.template}"
+
     GUNI_BIN="$ENV_BIN_DIR/gunicorn"
 
-    sed -e "s|{{WORKING_DIR}}|$WORK_DIR|g" \
+    sudo sed \
+        -e "s|{{WORKING_DIR}}|$WORK_DIR|g" \
         -e "s|{{USER}}|$USER|g" \
         -e "s|{{GROUP}}|$GROUP|g" \
         -e "s|{{ENV_BIN_DIR}}|$ENV_BIN_DIR|g" \
@@ -102,41 +107,42 @@ init_systemd_service() {
         $SERVICE_TEMPLATE > $SERVICE_FILE
 }
 
-init_config() {
-    cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
-}
-
 uninstall_service() {
     if [ ! -d "/run/systemd/system" ]; then
         echo "Systemd not support!!!"
     fi
-    systemctl stop $SERVICE_NAME
-    systemctl disable $SERVICE_NAME
-    rm -f $SERVICE_FILE
-    systemctl daemon-reload
+    sudo systemctl stop $SERVICE_NAME
+    sudo systemctl disable $SERVICE_NAME
+    sudo rm -f $SERVICE_FILE
+    sudo systemctl daemon-reload
 }
 
 init_conf_not_service() {
     init_default_data_path
     init_gunicorn_config
-    init_config
+    init_flask_config
 }
 
 if [ "$1" == "init" ]; then
     init
     init_conf_not_service
     init_systemd_service
-    echo "Init success!"
+
     echo "Default configuration file path: $DEFAULT_CONFIG_DIR"
     echo "Default log file path: $DEFAULT_LOG_DIR"
     echo "Default data file path: $DEFAULT_DATA_DIR"
     echo "Then run 'sudo systemctl start ts_svr' to start the service."
     exit 0
-elif [ "$1" == "init_conf_only" ]; then
+elif [ "$1" == "init_conf_without_service" ]; then
     if [ ! -d $PROJECT_DIR ]; then
         init
     fi
     init_conf_not_service
+
+    echo "Default configuration file path: $DEFAULT_CONFIG_DIR"
+    echo "Default log file path: $DEFAULT_LOG_DIR"
+    echo "Default data file path: $DEFAULT_DATA_DIR"
+
     exit 0
 elif [ "$1" == "uninstall_service" ]; then
     uninstall_service
