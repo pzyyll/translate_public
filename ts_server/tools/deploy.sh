@@ -37,7 +37,7 @@ init() {
             case $answer in
                 [Yy][Ee][Ss])
                     echo "You chose to continue."
-                    rm -rf $PROJECT_DIR
+                    sudo rm -rf $PROJECT_DIR
                     break
                     ;;
                 [Nn][Oo])
@@ -70,23 +70,23 @@ init() {
 
     bash $TOOLS_DIR/svr_init.sh init
 
-    sudo cp $FLASK_CONFIG_FILE_TEMPLATE $FLASK_CONFIG_FILE
+    cp $FLASK_CONFIG_FILE_TEMPLATE $FLASK_CONFIG_FILE
 }
 
 init_default_data_path() {
-    sudo mkdir -p $DEFAULT_LOG_DIR
-    sudo mkdir -p $DEFAULT_DATA_DIR
-    sudo mkdir -p $DEFAULT_FLASK_SESSION_DIR
-    sudo mkdir -p $DEFAULT_CONFIG_DIR
+    mkdir -p $DEFAULT_LOG_DIR
+    mkdir -p $DEFAULT_DATA_DIR
+    mkdir -p $DEFAULT_FLASK_SESSION_DIR
+    mkdir -p $DEFAULT_CONFIG_DIR
 }
 
 init_gunicorn_config() {
-    sudo sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
-        $GUNICORN_CONFIG_TEMPLATE | sudo tee $GUNI_CONFIG_FILE > /dev/null
+    sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
+        $GUNICORN_CONFIG_TEMPLATE | tee $GUNI_CONFIG_FILE > /dev/null
 }
 
 init_flask_config() {
-    sudo cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
+    cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
 }
 
 
@@ -139,7 +139,7 @@ update_script() {
     else
         echo "Failed to update the script."
         # 清理临时文件
-        rm -f "$0.tmp"
+        sudo rm -f "$0.tmp"
     fi
 }
 
