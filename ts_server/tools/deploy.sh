@@ -11,6 +11,8 @@ SERVICE_TEMPLATE="$TOOLS_DIR/deploy_templates/ts_svr.service.template"
 GUNICORN_CONFIG_TEMPLATE="$TOOLS_DIR/deploy_templates/gunicorn_config.py.template"
 TS_TRANSLATE_CONFIG_TEMPLATE="$TOOLS_DIR/deploy_templates/ts_translate_api.conf.template"
 FLASK_CONFIG_FILE_TEMPLATE="$TOOLS_DIR/deploy_templates/config.py.template"
+NGINX_CONFIG_TEMPLATE="$TOOLS_DIR/deploy_templates/ts_nginx.conf.template"
+
 ENV_BIN_DIR="$WORK_DIR/.venv/bin"
 
 DEFAULT_LOG_DIR="$WORK_DIR/logs"
@@ -18,12 +20,14 @@ DEFAULT_DATA_DIR="$WORK_DIR/data"
 DEFAULT_FLASK_SESSION_DIR="$WORK_DIR/flask_session"
 DEFAULT_CONFIG_DIR="$WORK_DIR/conf"
 
-SERVICE_NAME=$(basename ${SERVICE_TEMPLATE%.template})
+SERVICE_NAME="$(basename ${SERVICE_TEMPLATE%.template})"
+NGINX_CONFIG_NAME="$(basename ${NGINX_CONFIG_TEMPLATE%.template})"
 
 GUNI_CONFIG_FILE="$DEFAULT_CONFIG_DIR/$(basename ${GUNICORN_CONFIG_TEMPLATE%.template})"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 FLASK_CONFIG_FILE="$WORK_DIR/config.py"
 TS_TRANSLATE_CONFIG_FILE="$DEFAULT_CONFIG_DIR/$(basename ${TS_TRANSLATE_CONFIG_TEMPLATE%.template})"
+
 
 USER=$(whoami)
 GROUP=$(id -g -n $USER)
@@ -152,6 +156,33 @@ update_script() {
     fi
 }
 
+init_nginx_conf() {
+    CUSTOM_NGINX_CONFIG_DIR="$1"
+    if $CUSTOM_NGINX_CONFIG_DIR; then
+        NGINX_CONFIG_DIR=$CUSTOM_NGINX_CONFIG_DIR
+    else
+        NGINX_CONFIG_DIR="/etc/nginx"
+    fi
+    if [ ! -d "$NGINX_CONFIG_DIR" ]; then
+        echo "Nginx not support!!!"
+        exit 1
+    fi
+    if [ ! -f "$NGINX_CONFIG_DIR/nginx.conf" ]; then
+        echo "Nginx not installed!!!"
+        exit 1
+    fi
+    if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
+        sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME
+        echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
+    elif [ -d "$NGINX_CONFIG_DIR/conf.d" ]; then
+        sudo cp $NGINX_CONFIG_TEMPLATE /etc/nginx/conf.d/$NGINX_CONFIG_NAME
+        echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/conf.d/$NGINX_CONFIG_NAME"
+    else
+        echo "Nginx config path not found!!!"
+        exit 1
+    fi
+}
+
 up_source() {
     # 更新项目代码
     cd $PROJECT_DIR
@@ -202,14 +233,17 @@ elif [ "$1" == "service" ]; then
         echo "Usage: $0 $1 {start|stop|restart|status|reload}"
         exit 1
     fi
-elif [ "$1" == "up_source" ]; then
+elif [ "$1" == "up-source" ]; then
     up_source
-elif [ "$1" == "test_init" ]; then
-    bash $TOOLS_DIR/svr_init.sh test_init
-elif [ "$1" == "test_run" ]; then
+elif [ "$1" == "init-pyenv" ]; then
+    bash $TOOLS_DIR/svr_init.sh init
+elif [ "$1" == "test-run" ]; then
     bash $TOOLS_DIR/svr_init.sh test_run
 elif [ "$1" == "update" ]; then
     update_script
+elif [ "$1" == "init_nginx_conf" ]; then
+    init_nginx_conf
+    exit 0
 else
     echo "Usage: $0 {init|init_conf_without_service|install_service|uninstall_service|service|up_source|test_init|test_run|update}"
     exit 1
