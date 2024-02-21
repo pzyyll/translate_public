@@ -58,7 +58,7 @@
             .form-control {
                 /* 移除固定高度的设置，让它根据内容自适应 */
                 height: auto;
-                min-height: 150px; /* 设置一个最小高度 */
+                min-height: 100px; /* 设置一个最小高度 */
                 max-height: 45vh; /* 最大高度限制为视口高度的45% */
                 overflow-y: auto; /* 超出时允许滚动 */
             }
@@ -73,10 +73,10 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <textarea class="form-control" id="sourceText" placeholder="Type something..." control-id="ControlID-1"></textarea>
+            <textarea class="form-control" id="sourceText" placeholder="Text to be translated..." control-id="ControlID-1"></textarea>
         </div>
         <div class="col">
-            <textarea class="form-control" id="mirroredText" placeholder="Mirrored text will appear here..." readonly="" control-id="ControlID-2"></textarea>
+            <textarea class="form-control" id="mirroredText" placeholder="Translation text will appear here..." readonly="" control-id="ControlID-2"></textarea>
             <div id="extraContent" class="extra-content"></div> <!-- 额外内容的容器 -->
         </div>
     </div>
@@ -99,7 +99,7 @@
             } else { // 小屏时使用CSS规则
                 sourceText.style.height = '1px';
                 mirroredText.style.height = '1px';
-                adjustHeight = Math.max(sourceText.scrollHeight, mirroredText.scrollHeight, 150);
+                adjustHeight = Math.max(sourceText.scrollHeight, mirroredText.scrollHeight, 100);
                 adjustHeight = Math.min(adjustHeight, window.innerHeight * 0.45); // 限制高度不超过屏幕高度的45%
                 sourceText.style.height = adjustHeight + 'px';
                 mirroredText.style.height = sourceText.style.height;
@@ -113,6 +113,12 @@
             adjustTextareaHeightV2();
             const text = $(this).val();
             clearTimeout(timeoutId); // 清除之前的定时器
+
+            if (!text) {
+                $('#mirroredText').val('');
+                $('#extraContent').text('');
+                return;
+            }
 
             timeoutId = setTimeout(async function() {
                 try {

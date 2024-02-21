@@ -34,6 +34,9 @@ def translate_process_text():
     data = request.json
     text = data.get('text', '')
     api_type = data.get('api_type', "")
+    if not text or not text.strip():
+        return jsonify({'processed_text': ""})
+
     try:
         if api_type:
             with gl_proxy_apis.api_type_context(api_type):
