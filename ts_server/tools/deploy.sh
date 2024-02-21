@@ -152,6 +152,14 @@ update_script() {
     fi
 }
 
+up_source() {
+    # 更新项目代码
+    cd $PROJECT_DIR
+    git pull origin main
+    git read-tree -mu HEAD
+    git submodule update --recursive
+}
+
 if [ "$1" == "init" ]; then
     init
     init_conf_not_service
@@ -194,6 +202,8 @@ elif [ "$1" == "service" ]; then
         echo "Usage: $0 $1 {start|stop|restart|status|reload}"
         exit 1
     fi
+elif [ "$1" == "up_source" ]; then
+    up_source
 elif [ "$1" == "test_init" ]; then
     bash $TOOLS_DIR/svr_init.sh test_init
 elif [ "$1" == "test_run" ]; then
@@ -201,6 +211,6 @@ elif [ "$1" == "test_run" ]; then
 elif [ "$1" == "update" ]; then
     update_script
 else
-    echo "Usage: $0 {init|init_conf_without_service|install_service|uninstall_service|service|test_init|test_run|update}"
+    echo "Usage: $0 {init|init_conf_without_service|install_service|uninstall_service|service|up_source|test_init|test_run|update}"
     exit 1
 fi
