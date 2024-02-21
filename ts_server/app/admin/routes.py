@@ -22,6 +22,7 @@ def get_token(user_name):
         token_cnt = int(user.auth_key or 0) + 1
         user.auth_key = str(token_cnt)
         token = jwt_encode(user_name, token_cnt)
+        db.session.commit()
     except Exception as e:
         return 'error: '+str(e)
     return 'get_token:'+token

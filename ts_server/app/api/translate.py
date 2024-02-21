@@ -35,8 +35,7 @@ def handle_translate_request():
 
     requestMsg = json_format.ParseDict(request.get_json(), TranslateTextRequest())
     logger.debug("requestMsg: %s", requestMsg)
-
-    if jwt_check(requestMsg.token) is False:
+    if jwt_check(requestMsg.token, requestMsg.user) is False:
         return jsonify({'code': HTTPStatus.UNAUTHORIZED, 'msg': 'Token is not valid.'}), HTTPStatus.UNAUTHORIZED
     if not requestMsg.data:
         return jsonify({'code': HTTPStatus.BAD_REQUEST, 'msg': 'Invalid request data.'}), HTTPStatus.BAD_REQUEST

@@ -18,16 +18,18 @@ def jwt_encode(user_name, token_cnt=0):
     }
     return jwt.encode(payload, app.config.get('SECRET_KEY', '123456'), algorithm='HS256')
 
-def jwt_check(token):
+def jwt_check(token, username=None):
     from run import app
     from app.models import User
     try:
         token_decode = jwt.decode(token, app.config.get('SECRET_KEY', '123456'), algorithms='HS256')
-        user_name = token_decode['user']
+        token_user = token_decode['user']
     except Exception as e:
         logger.error('jwt_check error: %s|%s', str(e), token)
         return False
-    user = User.query.filter_by(username=user_name).first()
+    if token_user != username:
+        return False
+    user = User.query.filter_by(username=username).first()
     if not user:
         return False
     if user.auth_key != str(token_decode['cnt']):
