@@ -17,8 +17,10 @@ DEFAULT_DATA_DIR="$WORK_DIR/data"
 DEFAULT_FLASK_SESSION_DIR="$WORK_DIR/flask_session"
 DEFAULT_CONFIG_DIR="$WORK_DIR/conf"
 
+SERVICE_NAME=$(basename ${SERVICE_TEMPLATE%.template})
+
 GUNI_CONFIG_FILE="$DEFAULT_CONFIG_DIR/$(basename ${GUNICORN_CONFIG_TEMPLATE%.template})"
-SERVICE_FILE="/etc/systemd/system/$(basename ${SERVICE_TEMPLATE%.template})"
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
 FLASK_CONFIG_FILE="$WORK_DIR/config.py"
 TS_TRANSLATE_CONFIG_FILE="$DEFAULT_CONFIG_DIR/$(basename ${TS_TRANSLATE_CONFIG_TEMPLATE%.template})"
 
@@ -104,11 +106,14 @@ init_config() {
     cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
 }
 
-uninstall() {
+uninstall_service() {
     if [ ! -d "/run/systemd/system" ]; then
         echo "Systemd not support!!!"
     fi
-    # todo 删除服务
+    systemctl stop $SERVICE_NAME
+    systemctl disable $SERVICE_NAME
+    rm -f $SERVICE_FILE
+    systemctl daemon-reload
 }
 
 init_conf_not_service() {
@@ -133,6 +138,26 @@ elif [ $1 == "init_conf" ]; then
     fi
     init_conf_not_service
     exit 0
+elif [ $1 == "uninstall_service" ]; then
+    uninstall_service
+    exit 0
+elif [ $1 == "service" ]; then
+    if [ $2 == "start" ]; then
+        systemctl start $SERVICE_NAME
+    elif [ $2 == "stop" ]; then
+        systemctl stop $SERVICE_NAME
+    elif [ $2 == "restart" ]; then
+        systemctl restart $SERVICE_NAME
+    elif [ $2 == "status" ]; then
+        systemctl status $SERVICE_NAME
+    elif [ $2 == "reload" ]; then
+        systemctl daemon-reload
+    else
+        echo "Usage: $0 $1 {start|stop|restart|status|reload}"
+        exit 1
+    fi
+elif [ $1 == "test_init" ]; then
+    bash $TOOLS_DIR/svr_init.sh test_init
 elif [ $1 == "test_run" ]; then
     bash $TOOLS_DIR/svr_init.sh test_run
 else
