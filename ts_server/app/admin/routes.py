@@ -6,7 +6,6 @@ import logging
 
 from flask_login import login_required
 from app.admin import admin_bp
-from app.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,8 @@ logger = logging.getLogger(__name__)
 @login_required
 def get_token(user_name):
     from app.admin import jwt_encode
-    if User.query.filter_by(username=user_name).first() is None:
+    from app.admin.db import db
+    if not db.query_user_by_name(username=user_name):
         return 'user not found'
     try:
         token = jwt_encode(user_name)
@@ -26,13 +26,9 @@ def get_token(user_name):
 @admin_bp.route('/add_user/<user_name>/<passwd>', methods=['GET', 'POST'])
 @login_required
 def add_user(user_name, passwd):
-    if User.query.filter_by(username=user_name).first() is not None:
-        return 'user exists'
-    user = User(username=user_name)
-    user.set_passwd(passwd)
+    from app.admin.db import db
     try:
-        db.session.add(user)
-        db.session.commit()
+        db.add_user(user_name, passwd)
     except Exception as e:
         return 'error: '+str(e)
     return 'add_user success'

@@ -23,20 +23,21 @@ LOG_LEVEL = os.environ.get('TS_LOG_LEVEL', 'DEBUG')
 init_logging(LOG_FILE, LOG_LEVEL)
 
 
-from app import create_app, db
+from app import create_app
 app = create_app(config)
 
 
-# csrf = CSRFProtect(app)
-
 with app.app_context():
+    from app.admin.db import db
     db.create_all()
 
 
 @app.shell_context_processor
 def make_shell_context():
     from app.models import User
-    return {'db': db, 'User': User}
+    from app.admin.gm_cmd import GMCommand
+    from app.admin.db import db
+    return {'db': db, 'User': User, 'gm': GMCommand()}
 
 
 if __name__ == '__main__':
