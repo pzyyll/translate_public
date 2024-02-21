@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @admin_bp.route('/get_token/<user_name>', methods=['GET', 'POST'])
 @login_required
 def get_token(user_name):
-    from app.admin import jwt_encode
+    from app.admin.auth_check import jwt_encode
     from app.admin.db import db
     if not db.query_user_by_name(username=user_name):
         return 'user not found'
