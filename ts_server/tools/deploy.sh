@@ -70,23 +70,23 @@ init() {
 
     bash $TOOLS_DIR/svr_init.sh init
 
-    cp $FLASK_CONFIG_FILE_TEMPLATE $FLASK_CONFIG_FILE
+    sudo cp $FLASK_CONFIG_FILE_TEMPLATE $FLASK_CONFIG_FILE
 }
 
 init_default_data_path() {
-    mkdir -p $DEFAULT_LOG_DIR
-    mkdir -p $DEFAULT_DATA_DIR
-    mkdir -p $DEFAULT_FLASK_SESSION_DIR
-    mkdir -p $DEFAULT_CONFIG_DIR
+    sudo mkdir -p $DEFAULT_LOG_DIR
+    sudo mkdir -p $DEFAULT_DATA_DIR
+    sudo mkdir -p $DEFAULT_FLASK_SESSION_DIR
+    sudo mkdir -p $DEFAULT_CONFIG_DIR
 }
 
 init_gunicorn_config() {
-    sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
-        $GUNICORN_CONFIG_TEMPLATE > $GUNI_CONFIG_FILE
+    sudo sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
+        $GUNICORN_CONFIG_TEMPLATE | sudo tee $GUNI_CONFIG_FILE > /dev/null
 }
 
 init_flask_config() {
-    cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
+    sudo cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
 }
 
 
