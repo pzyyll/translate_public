@@ -85,7 +85,7 @@ init_gunicorn_config() {
         $GUNICORN_CONFIG_TEMPLATE > $GUNI_CONFIG_FILE
 }
 
-init_fask_config() {
+init_flask_config() {
     cp $TS_TRANSLATE_CONFIG_TEMPLATE $TS_TRANSLATE_CONFIG_FILE
 }
 
