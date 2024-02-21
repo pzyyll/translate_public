@@ -8,11 +8,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def jwt_encode(user_name):
+def jwt_encode(user_name, token_cnt=0):
+    from app.admin.db import db
     from run import app
     payload = {
         'user': user_name,
-        'ts': time.time()
+        'ts': time.time(),
+        'cnt': token_cnt,
     }
     return jwt.encode(payload, app.config.get('SECRET_KEY', '123456'), algorithm='HS256')
 
@@ -25,4 +27,9 @@ def jwt_check(token):
     except Exception as e:
         logger.error('jwt_check error: %s|%s', str(e), token)
         return False
-    return User.query.filter_by(username=user_name).first() is not None
+    user = User.query.filter_by(username=user_name).first()
+    if not user:
+        return False
+    if user.auth_key != str(token_decode['cnt']):
+        return False
+    return True

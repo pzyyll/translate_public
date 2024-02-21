@@ -15,10 +15,13 @@ logger = logging.getLogger(__name__)
 def get_token(user_name):
     from app.admin.auth_check import jwt_encode
     from app.admin.db import db
-    if not db.query_user_by_name(username=user_name):
+    user = db.query_user_by_name(username=user_name)
+    if not user:
         return 'user not found'
     try:
-        token = jwt_encode(user_name)
+        token_cnt = int(user.auth_key or 0) + 1
+        user.auth_key = str(token_cnt)
+        token = jwt_encode(user_name, token_cnt)
     except Exception as e:
         return 'error: '+str(e)
     return 'get_token:'+token
