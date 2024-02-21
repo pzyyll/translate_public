@@ -54,16 +54,19 @@ class BaiduAPI(BaseAPI):
 
         from_lang = kwargs.get('from_lang', None)
         if not to_lang:
-            if not from_lang:
-                from_lang = self.detect_language(simple_random_text_segments(text, 10, 3)).get('language_code', 'en')
-            to_lang = 'en' if 'zh' in from_lang else 'zh'
+            detected_lang = (
+                self.detect_language(simple_random_text_segments(text)).get('language_code', 'en')
+                if not from_lang
+                else from_lang
+                )
+            to_lang = 'en' if 'zh' in detected_lang else 'zh'
 
         salt = self._make_salt()
         sign = self._make_sign(text, salt)
         url_params = {
             'appid': self.app_id,
             'q': text,
-            'from': from_lang,
+            'from': from_lang or "auto",
             'to': to_lang,
             'salt': salt, 'sign': sign
         }

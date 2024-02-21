@@ -5,7 +5,7 @@
 import random
 
 
-def simple_random_text_segments(text, length, n):
+def simple_random_text_segments(text, length=60, n=3):
     # Calculate the maximum start index for a segment
     max_start_index = len(text) - length
     

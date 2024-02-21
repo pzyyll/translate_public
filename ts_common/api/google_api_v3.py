@@ -48,9 +48,8 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
 
         from_lang = kwargs.get('from_lang', None)
         if not to_lang:
-            if not from_lang:
-                from_lang = self.detect_language(simple_random_text_segments(text, 10, 3)).get('language_code')
-            to_lang = 'en' if 'zh' in from_lang else 'zh'
+            detect_lang = self.detect_language(simple_random_text_segments(text)).get('language_code') if not from_lang else from_lang
+            to_lang = 'en' if 'zh' in detect_lang else 'zh'
 
         google_api_extra_params = kwargs.get('google_api_extra_params', {})
         try:
