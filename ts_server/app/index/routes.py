@@ -33,12 +33,18 @@ def translate_process_text():
     from app.api.translate import gl_proxy_apis
     data = request.json
     text = data.get('text', '')
-    # 这里可以加入你想要的任何处理逻辑
+    api_type = data.get('api_type', "")
     try:
-        result = gl_proxy_apis.translate_text(text)
-        processed_text = result.get('translate_text') or text
+        if api_type:
+            with gl_proxy_apis.api_type_context(api_type):
+                result = gl_proxy_apis.translate_text(text)
+        else:
+            result = gl_proxy_apis.translate_text(text)
+            api_type = gl_proxy_apis.last_translate_api_type
+            processed_text = result.get('translate_text') or text
         logger.debug('processed_text: %s', result)
     except Exception as exc:
-        processed_text = text
+        processed_text = "An error occurred in the translation 🤔"
+        api_type = "error occurred😩"
         logger.debug('processed_text err: %s', str(exc))
-    return jsonify({'processed_text': processed_text})
+    return jsonify({'processed_text': processed_text, 'api_type': api_type.capitalize()})

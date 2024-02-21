@@ -3,7 +3,7 @@
 # @Description: base api
 
 import abc
-
+from contextlib import nullcontext
 from typing import TypedDict, List
 from ts_common.external_libs.pyhelper.utils.proxy_helper import Proxy
 
@@ -89,16 +89,20 @@ class ProxyAwareTranslateAPI(TranslateAPIProto):
     def set_api_type(self, api_type=None):
         self.api_type = api_type
 
+    @property
+    def _proxy_context(self):
+        return Proxy(self.proxy) if self.proxy else nullcontext()
+
     def detect_language(self, text, **kwargs) -> DetectLanguage:
-        with Proxy(self.proxy):
+        with self._proxy_context:
             return self._detect_language(text, **kwargs)
     
     def translate_text(self, text, to_lang=None, **kwargs) -> TranslateResult:
-        with Proxy(self.proxy):
+        with self._proxy_context:
             return self._translate_text(text, to_lang, **kwargs)
     
     def list_languages(self, display_name_code=None, **kwargs) -> List[Language]:
-        with Proxy(self.proxy):
+        with self._proxy_context:
             return self._list_languages(display_name_code, **kwargs)
 
     @abc.abstractmethod

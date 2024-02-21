@@ -34,9 +34,9 @@ class BaiduAPI(BaseAPI):
         sign = self._make_sign(text, salt)
         params = {'appid': self.app_id, 'q': text, 'salt': salt, 'sign': sign}
         url = API_HOST + DETECT
-        r = requests.post(url, params=params, headers=HEADERS, timeout=10)
-        result = r.json()
         try:
+            r = requests.post(url, params=params, headers=HEADERS, timeout=10)
+            result = r.json()
             return {"language_code": result.get('data').get('src')}
         except Exception as e:
             logging.error(f"baidu api _detect_language error: {e}|{result}")
