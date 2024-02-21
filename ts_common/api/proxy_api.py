@@ -2,6 +2,7 @@
 # @Date: "2024-02-15"
 # @Description: APIs Proxy
 
+import logging
 from collections import OrderedDict
 
 from .base_api import ProxyAwareTranslateAPI, TranslateError
@@ -48,7 +49,8 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
             raise ValueError('Invalid API type.')
 
     def api_type_context(self, api_type):
-        return ApiTypeContext(self, api_type)
+        from contextlib import nullcontext
+        return ApiTypeContext(self, api_type) if api_type else nullcontext()
 
     def _detect_language(self, text, **kwargs):
         if self._default_api:
@@ -60,7 +62,8 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
         for _, api in self._apis.items():
             try:
                 return api.detect_language(text, **kwargs)
-            except Exception:
+            except Exception as exc:
+                logging.warning(f'API {api} failed to detect language: {exc}')
                 continue
         raise TranslateError('All APIs failed to detect language.')
 
@@ -76,7 +79,8 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
                 reusult = api.translate_text(text, to_lang, **kwargs)
                 self.last_translate_api_type = api_type
                 return reusult
-            except Exception:
+            except Exception as e:
+                logging.warning(f'API {api} failed to translate text: {e}')
                 continue
         raise TranslateError('All APIs failed to translate text.')
 
@@ -90,6 +94,7 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
         for api in self._apis.items():
             try:
                 return api.list_languages(display_language_code)
-            except Exception:
+            except Exception as e:
+                logging.warning(f'API {api} failed to list languages: {e}')
                 continue
         raise TranslateError('All APIs failed to list languages.')

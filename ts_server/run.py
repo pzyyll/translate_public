@@ -20,7 +20,10 @@ from ts_common.external_libs.pyhelper.utils.logging_helper import init_logging
 
 LOG_FILE = os.environ.get('TS_LOG_FILE', 'output.log')
 LOG_LEVEL = os.environ.get('TS_LOG_LEVEL', 'DEBUG')
-init_logging(LOG_FILE, LOG_LEVEL)
+init_logging(LOG_FILE, LOG_LEVEL,
+    format='%(asctime)s - %(threadName)s - %(thread)d - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 
 from app import create_app
