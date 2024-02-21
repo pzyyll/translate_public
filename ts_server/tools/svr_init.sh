@@ -9,20 +9,22 @@ echo "TOOLS_DIR: $TOOLS_DIR"
 echo "SVR_DIR: $SVR_DIR"
 # echo "DEPS_REQUIREMENTS_FILE: $DEPS_REQUIREMENTS_FILE"
 
+PYTHON="python3"
+
 init() {
     echo "Initializing ts_server python running deps..."
     echo "cd $SVR_DIR"
     cd $SVR_DIR || exit
 
     echo "Start installing python venv ..."
-    python -m pip install --upgrade pip
-    python -m pip install virtualenv --user
-    python -m venv .venv --clear
+    $PYTHON -m pip install --upgrade pip || exit
+    $PYTHON -m pip install virtualenv --user
+    $PYTHON -m venv .venv --clear
 
     echo "Start installing python deps ..."
     source .venv/bin/activate
-    python -m pip install --upgrade pip
-    python -m pip install -r $DEPS_REQUIREMENTS_FILE
+    $PYTHON -m pip install --upgrade pip
+    $PYTHON -m pip install -r $DEPS_REQUIREMENTS_FILE
 
     echo "Update pyhelper submodules ..."
     cd - || exit
@@ -40,7 +42,7 @@ init() {
 test_run() {
     cd $SVR_DIR || exit
     source .venv/bin/activate
-    python -m flask run --debug
+    $PYTHON -m flask run --debug
 }
 
 if [ "$1" == "init" ]; then
