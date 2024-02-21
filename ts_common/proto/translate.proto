@@ -35,7 +35,7 @@ message TranslateTextRequest {
 }
 
 message TranslateTextResponse {
-    int code = 1;
+    int64 code = 1;
     TranslatedText result = 2;
     optional string from_api_type = 3;  // The API that was used to translate the text
     optional string msg = 4;  // Error message

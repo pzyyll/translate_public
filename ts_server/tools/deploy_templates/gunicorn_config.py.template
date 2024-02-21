@@ -24,9 +24,9 @@ max_requests_jitter = 50
 # 日志等级，可选的有 debug, info, warning, error, critical
 loglevel = 'info'
 # 访问日志文件的路径，使用 '-' 表示标准输出
-accesslog = '{{LOG_PATH}}/access.log'
+accesslog = '{{LOG_PATH}}/ts_access.log'
 # 错误日志文件的路径，使用 '-' 表示标准输出
-errorlog = '{{LOG_PATH}}/error.log'
+errorlog = '{{LOG_PATH}}/ts_error.log'
 # 访问日志的格式
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 

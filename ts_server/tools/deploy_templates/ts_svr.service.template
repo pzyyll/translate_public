@@ -7,7 +7,7 @@ User={{USER}}
 Group={{GROUP}}
 WorkingDirectory={{WORKING_DIR}}
 Environment="PATH={{ENV_BIN_DIR}}"
-ExecStart={{GUNI_BIN}} -c {{GUNI_CONFIG}} --bind unix:{{SOCK_DIR}} -m 007 run:app
+ExecStart={{GUNI_BIN}} -c {{GUNI_CONFIG}} run:app
 Restart=always
 
 [Install]

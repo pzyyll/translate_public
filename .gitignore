@@ -152,5 +152,6 @@ logs
 config.py
 
 **/flask_session
-
 **/tmp
+**/data
+**/conf
