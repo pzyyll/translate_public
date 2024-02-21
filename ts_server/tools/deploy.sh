@@ -128,7 +128,7 @@ init_conf_not_service() {
 update_script() {
     echo "Updating script..."
     # 使用curl下载最新的脚本到当前目录的临时文件
-    curl -s $SCRIPT_SOURCE_URL -o "$0.tmp"
+    curl -H "Cache-Control: no-cache" -s $SCRIPT_SOURCE_URL -o "$0.tmp"
     
     # 检查下载是否成功
     if [ $? -eq 0 ]; then
