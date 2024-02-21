@@ -173,6 +173,9 @@ elif [ "$1" == "init_conf_without_service" ]; then
     echo "Default data file path: $DEFAULT_DATA_DIR"
 
     exit 0
+elif [ "$1" == "install_service" ]; then
+    init_systemd_service
+    exit 0
 elif [ "$1" == "uninstall_service" ]; then
     uninstall_service
     exit 0
@@ -198,6 +201,6 @@ elif [ "$1" == "test_run" ]; then
 elif [ "$1" == "update" ]; then
     update_script
 else
-    echo "Usage: $0 {init|init_conf_only|uninstall_service|service|test_init|test_run}"
+    echo "Usage: $0 {init|init_conf_without_service|install_service|uninstall_service|service|test_init|test_run|update}"
     exit 1
 fi
