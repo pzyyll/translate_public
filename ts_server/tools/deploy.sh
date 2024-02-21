@@ -105,7 +105,7 @@ init_systemd_service() {
         -e "s|{{ENV_BIN_DIR}}|$ENV_BIN_DIR|g" \
         -e "s|{{GUNI_BIN}}|$GUNI_BIN|g" \
         -e "s|{{GUNI_CONFIG}}|$GUNI_CONFIG_FILE/|g" \
-        $SERVICE_TEMPLATE > $SERVICE_FILE
+        $SERVICE_TEMPLATE | sudo tee $SERVICE_FILE > /dev/null
 }
 
 uninstall_service() {
