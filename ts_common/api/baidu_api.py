@@ -9,6 +9,7 @@ import logging
 import six
 from .base_api import ProxyAwareTranslateAPI as BaseAPI
 from .base_api import TranslateError
+from .api_utils import simple_random_text_segments
 
 HEADERS = {'Content-Type': 'application/x-www-form-urlencoded'}
 API_HOST = 'https://fanyi-api.baidu.com/api/trans/vip/'
@@ -54,7 +55,7 @@ class BaiduAPI(BaseAPI):
         from_lang = kwargs.get('from_lang', None)
         if not to_lang:
             if not from_lang:
-                from_lang = self.detect_language(text).get('language_code', 'en')
+                from_lang = self.detect_language(simple_random_text_segments(text, 10, 3)).get('language_code', 'en')
             to_lang = 'en' if 'zh' in from_lang else 'zh'
 
         salt = self._make_salt()

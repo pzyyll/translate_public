@@ -9,6 +9,7 @@ import os
 
 from google.cloud import translate
 from ts_common.api.base_api import ProxyAwareTranslateAPI
+from ts_common.api.api_utils import simple_random_text_segments
 
 
 class MimeType(object):
@@ -48,7 +49,7 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
         from_lang = kwargs.get('from_lang', None)
         if not to_lang:
             if not from_lang:
-                from_lang = self.detect_language(text).get('language_code')
+                from_lang = self.detect_language(simple_random_text_segments(text, 10, 3)).get('language_code')
             to_lang = 'en' if 'zh' in from_lang else 'zh'
 
         google_api_extra_params = kwargs.get('google_api_extra_params', {})
