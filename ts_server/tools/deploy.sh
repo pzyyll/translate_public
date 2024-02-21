@@ -122,7 +122,7 @@ init_conf_not_service() {
     init_config
 }
 
-if [ $1 == "init" ]; then
+if [ "$1" == "init" ]; then
     init
     init_conf_not_service
     init_systemd_service
@@ -132,35 +132,35 @@ if [ $1 == "init" ]; then
     echo "Default data file path: $DEFAULT_DATA_DIR"
     echo "Then run 'sudo systemctl start ts_svr' to start the service."
     exit 0
-elif [ $1 == "init_conf" ]; then
+elif [ "$1" == "init_conf_only" ]; then
     if [ ! -d $PROJECT_DIR ]; then
         init
     fi
     init_conf_not_service
     exit 0
-elif [ $1 == "uninstall_service" ]; then
+elif [ "$1" == "uninstall_service" ]; then
     uninstall_service
     exit 0
-elif [ $1 == "service" ]; then
-    if [ $2 == "start" ]; then
+elif [ "$1" == "service" ]; then
+    if [ "$2" == "start" ]; then
         systemctl start $SERVICE_NAME
-    elif [ $2 == "stop" ]; then
+    elif [ "$2" == "stop" ]; then
         systemctl stop $SERVICE_NAME
-    elif [ $2 == "restart" ]; then
+    elif [ "$2" == "restart" ]; then
         systemctl restart $SERVICE_NAME
-    elif [ $2 == "status" ]; then
+    elif [ "$2" == "status" ]; then
         systemctl status $SERVICE_NAME
-    elif [ $2 == "reload" ]; then
+    elif [ "$2" == "reload" ]; then
         systemctl daemon-reload
     else
         echo "Usage: $0 $1 {start|stop|restart|status|reload}"
         exit 1
     fi
-elif [ $1 == "test_init" ]; then
+elif [ "$1" == "test_init" ]; then
     bash $TOOLS_DIR/svr_init.sh test_init
-elif [ $1 == "test_run" ]; then
+elif [ "$1" == "test_run" ]; then
     bash $TOOLS_DIR/svr_init.sh test_run
 else
-    echo "Usage: $0 {init}"
+    echo "Usage: $0 {init|init_conf_only|uninstall_service|service|test_init|test_run}"
     exit 1
 fi
