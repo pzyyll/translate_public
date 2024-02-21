@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SCRIPT_SOURCE_URL="https://raw.githubusercontent.com/pzyyll/translate_public/main/ts_server/tools/deploy.sh"
 PROJECT_REPOS="https://github.com/pzyyll/translate_public.git"
 PROJECT_NAME="ts_svr"
 CURRENT_DIR="$(pwd)"
@@ -123,6 +124,25 @@ init_conf_not_service() {
     init_flask_config
 }
 
+# 定义更新函数
+update_script() {
+    echo "Updating script..."
+    # 使用curl下载最新的脚本到当前目录的临时文件
+    curl -s $SCRIPT_URL -o "$0.tmp"
+    
+    # 检查下载是否成功
+    if [ $? -eq 0 ]; then
+        # 替换旧的脚本文件，并保留执行权限
+        chmod --reference="$0" "$0.tmp"
+        mv "$0.tmp" "$0"
+        echo "The script has been updated."
+    else
+        echo "Failed to update the script."
+        # 清理临时文件
+        rm -f "$0.tmp"
+    fi
+}
+
 if [ "$1" == "init" ]; then
     init
     init_conf_not_service
@@ -166,6 +186,8 @@ elif [ "$1" == "test_init" ]; then
     bash $TOOLS_DIR/svr_init.sh test_init
 elif [ "$1" == "test_run" ]; then
     bash $TOOLS_DIR/svr_init.sh test_run
+elif [ "$1" == "update" ]; then
+    update_script
 else
     echo "Usage: $0 {init|init_conf_only|uninstall_service|service|test_init|test_run}"
     exit 1
