@@ -64,7 +64,7 @@ def translate_text():
     text = data.get('text', '')
     api_type = data.get('api_type', "")
 
-    translate_text = get_translate_text(text, api_type=api_type)
+    translate_text, api_type = get_translate_text(text, api_type=api_type)
     redirect_url = url_for('index.translate_request', text=text, at=api_type)
 
     return jsonify({'redirect_url': redirect_url, 'translate_text': translate_text, 'api_type': api_type})
