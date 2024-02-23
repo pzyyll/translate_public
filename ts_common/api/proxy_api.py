@@ -30,15 +30,35 @@ class TranslateAPIProxyExecutor(BaseTranslateAPI):
     @classmethod
     def create(cls, proxy, proxy_cls, *args, **kwargs):
         proxy_executor = cls()
-        proxy_executor._init_worker(proxy, proxy_cls, *args, **kwargs)
+        proxy_executor._set_worker_info(proxy, proxy_cls, *args, **kwargs)
         return proxy_executor
 
-    def _init_worker(self, proxy, proxy_cls, *proxy_cls_args, **proxy_cls_kwargs):
+    def init(self, conf):
+        super().init(conf)
+        self._proxy_worker = None
+        self.proxy = None
+        self.proxy_cls = None
+        self.proxy_cls_args = ()
+        self.proxy_cls_kwargs = {}
+
+
+    def _set_worker_info(self, proxy, proxy_cls, *proxy_cls_args, **proxy_cls_kwargs):
         self.proxy = proxy
-        if self.proxy:
+        self.proxy_cls = proxy_cls
+        self.proxy_cls_args = proxy_cls_args
+        self.proxy_cls_kwargs = proxy_cls_kwargs
+
+    def _init_worker(self):
+        if self.proxy and self.proxy_cls:
             # 需要代理访问的API，创建一个新的代理进程池处理，代理需要设置全局的socket.socket避免多线程下代理设置污染主进程
-            self.proxy_worker = ProxyWorkerPool()
-            self.proxy_worker.set_proxy_info(self.proxy, proxy_cls, *proxy_cls_args, **proxy_cls_kwargs)
+            self._proxy_worker = ProxyWorkerPool()
+            self._proxy_worker.set_proxy_info(self.proxy, self.proxy_cls, *self.proxy_cls_args, **self.proxy_cls_kwargs)
+
+    @property
+    def proxy_worker(self):
+        if not self._proxy_worker:
+            self._init_worker()
+        return self._proxy_worker
 
     def _execute(self, func, *args, **kwargs):
         if self.proxy_worker:
@@ -64,7 +84,7 @@ class ProxyAPIs(BaseTranslateAPI):
     BAIDU = 'baidu'
     
     API_TYPE = OrderedDict({
-        GOOGLE: GoogleAPI,
+        GOOGLE: GlobalGoobleAPI,
         BAIDU: BaiduAPI
     })
 
@@ -75,9 +95,8 @@ class ProxyAPIs(BaseTranslateAPI):
     def init(self, conf):
         super(ProxyAPIs, self).init(conf)
         self._apis = OrderedDict({})
-        self.last_translate_api_type = None
         for api_type, api_class in self.API_TYPE.items():
-            api_conf = conf.get(api_type, {})
+            api_conf = self.conf.get(api_type, {})
             self._apis[api_type] = (
                 TranslateAPIProxyExecutor.create(api_conf.get("proxy"), api_class, api_conf)
                 if "proxy" in api_conf else api_class(api_conf)
@@ -116,9 +135,9 @@ class ProxyAPIs(BaseTranslateAPI):
 
         for api_type, api in self._apis.items():
             try:
-                reusult = api.translate_text(text, to_lang, **kwargs)
-                self.last_translate_api_type = api_type
-                return reusult
+                result = api.translate_text(text, to_lang, **kwargs)
+                result['from_api_type'] = api_type
+                return result
             except Exception as e:
                 logging.warning(f'API {api} failed to translate text: {e}')
                 continue

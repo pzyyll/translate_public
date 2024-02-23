@@ -7,26 +7,13 @@ import logging
 from http import HTTPStatus
 from flask import request, make_response, jsonify
 
-from utils import path_helper, get_flask_env
-
-from ts_common.api.proxy_api import ProxyAPIs
-from ts_common.external_libs.pyhelper.utils.config import Config
-from ts_common.external_libs.pyhelper.singleton import singleton
 
 from app.api import api
 from app.admin.auth_check import jwt_check
 
 logger = logging.getLogger(__name__)
-gl_config = Config(path_helper.get_path(get_flask_env("TS_CONFIG_FILE", "config.json")))
 
-
-@singleton
-class GlobalProxyAPIs(ProxyAPIs):
-    pass
-
-
-gl_proxy_apis = GlobalProxyAPIs(gl_config)
-
+from app.translate_api import translate_api
 
 @api.route('/translate', methods=['POST'])
 def handle_translate_request():
@@ -42,13 +29,13 @@ def handle_translate_request():
     api_type = requestMsg.data.api_type
 
     try:
-        with gl_proxy_apis.api_type_context(api_type):
-            result = gl_proxy_apis.translate_text(requestMsg.data.text, requestMsg.data.target_lang_code)
+        with translate_api.api_type_context(api_type):
+            result = translate_api.translate_text(requestMsg.data.text, requestMsg.data.target_lang_code)
             logger.debug("result: %s", result)
             response_body = {
                 'code': HTTPStatus.OK,
                 'result': result,
-                **({'from_api_type': gl_proxy_apis.last_translate_api_type} if not api_type else {})
+                **({'from_api_type': result["from_api_type"]} if not api_type else {})
             }
             return jsonify(response_body), HTTPStatus.OK
     except Exception as e:
