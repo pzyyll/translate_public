@@ -160,7 +160,6 @@ update_script() {
 init_nginx_conf() {
     read -p "Nginx config path(default: /etc/nginx):" NGINX_CONFIG_DIR
     NGINX_CONFIG_DIR=${NGINX_CONFIG_DIR:-/etc/nginx}
-    echo "Nginx config dir: ", $NGINX_CONFIG_DIR
     if [ ! -d "$NGINX_CONFIG_DIR" ]; then
         echo "Nginx not support!!!"
         exit 1
