@@ -156,13 +156,11 @@ update_script() {
     fi
 }
 
+
 init_nginx_conf() {
-    CUSTOM_NGINX_CONFIG_DIR="$1"
-    if $CUSTOM_NGINX_CONFIG_DIR; then
-        NGINX_CONFIG_DIR=$CUSTOM_NGINX_CONFIG_DIR
-    else
-        NGINX_CONFIG_DIR="/etc/nginx"
-    fi
+    read -p "Nginx config path(default: /etc/nginx):" NGINX_CONFIG_DIR
+    NGINX_CONFIG_DIR=${NGINX_CONFIG_DIR:-/etc/nginx}
+    echo "Nginx config dir: ", $NGINX_CONFIG_DIR
     if [ ! -d "$NGINX_CONFIG_DIR" ]; then
         echo "Nginx not support!!!"
         exit 1
@@ -201,6 +199,7 @@ init_nginx_conf() {
     echo "Please modify the config file $NGINX_CONFIG_FILE and run 'sudo systemctl restart nginx' to take effect."
 }
 
+
 up_source() {
     # 更新项目代码
     cd $PROJECT_DIR
@@ -219,7 +218,7 @@ if [ "$1" == "init" ]; then
     echo "Default data file path: $DEFAULT_DATA_DIR"
     echo "Then run 'sudo systemctl start ts_svr' to start the service."
     exit 0
-elif [ "$1" == "init_conf_without_service" ]; then
+elif [ "$1" == "init-conf-noservice" ]; then
     if [ ! -d $PROJECT_DIR ]; then
         init
     fi
@@ -230,10 +229,10 @@ elif [ "$1" == "init_conf_without_service" ]; then
     echo "Default data file path: $DEFAULT_DATA_DIR"
 
     exit 0
-elif [ "$1" == "install_service" ]; then
+elif [ "$1" == "install-service" ]; then
     init_systemd_service
     exit 0
-elif [ "$1" == "uninstall_service" ]; then
+elif [ "$1" == "uninstall-service" ]; then
     uninstall_service
     exit 0
 elif [ "$1" == "service" ]; then
@@ -259,10 +258,10 @@ elif [ "$1" == "test-run" ]; then
     bash $TOOLS_DIR/svr_init.sh test_run
 elif [ "$1" == "update" ]; then
     update_script
-elif [ "$1" == "init_nginx_conf" ]; then
+elif [ "$1" == "init-nginx-conf" ]; then
     init_nginx_conf
     exit 0
 else
-    echo "Usage: $0 {init|init_conf_without_service|install_service|uninstall_service|service|up_source|test_init|test_run|update}"
+    echo "Usage: $0 {init|init-conf-noservice|install-service|uninstall-service|service|up-source|init-pyenv|test-run|update|init-nginx-conf}"
     exit 1
 fi
