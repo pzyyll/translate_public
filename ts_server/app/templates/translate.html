@@ -130,7 +130,7 @@
                     });
                     $('#mirroredText').val(response.translate_text);
                     adjustTextareaHeightV2(); // 调整翻译文本框的高度
-                     $('#extraContent').text(response.api_type); // 显示额外信息
+                    $('#extraContent').text(response.api_type); // 显示额外信息
                     if (response.redirect_url) {
                         // 如果返回了重定向URL，更新浏览器URL
                         history.pushState(null, '', response.redirect_url);
