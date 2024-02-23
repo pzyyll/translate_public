@@ -36,7 +36,7 @@ init() {
     if [ -d $PROJECT_DIR ]; then
         while true; do
             echo "Project directory $PROJECT_DIR already exists. "
-            echo "Do you want to remove it and re-initialize? [yes/no]"
+            echo -n "Do you want to remove it and re-initialize? [yes/no]: "
             read answer
             case $answer in
                 [Yy][Ee][Ss])
@@ -171,16 +171,34 @@ init_nginx_conf() {
         echo "Nginx not installed!!!"
         exit 1
     fi
+    NGINX_CONFIG_FILE
     if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
-        sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME
+        NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
+        # sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME
         echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
     elif [ -d "$NGINX_CONFIG_DIR/conf.d" ]; then
-        sudo cp $NGINX_CONFIG_TEMPLATE /etc/nginx/conf.d/$NGINX_CONFIG_NAME
+        NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/conf.d/$NGINX_CONFIG_NAME"
+        # sudo cp $NGINX_CONFIG_TEMPLATE /etc/nginx/conf.d/$NGINX_CONFIG_NAME
         echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/conf.d/$NGINX_CONFIG_NAME"
     else
         echo "Nginx config path not found!!!"
         exit 1
     fi
+
+    read -p "Please enter the domain name or ip (default 127.0.0.1): " domain || exit 1
+    domain=${domain:-127.0.0.1}
+    read -p "Please enter the port (default 8888): " port || exit 1
+    port=${port:-8888}
+    read -p "Please enter the local web server ip and port (default http://127.0.0.1:6868): " flask_server || exit 1
+    flask_server=${flask_server:-http://127.0.0.1:6868}
+
+    sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_FILE
+    sudo sed \
+        -i "s|{{PUBLIC_IP}}|$domain|g" \
+        -i "s|{{PORT}}|$port|g" \
+        -i "s|{{FLASK_IP}}|$flask_server|g" \
+        $NGINX_CONFIG_FILE
+    echo "Please modify the config file $NGINX_CONFIG_FILE and run 'sudo systemctl restart nginx' to take effect."
 }
 
 up_source() {
