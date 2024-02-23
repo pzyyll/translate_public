@@ -169,15 +169,10 @@ init_nginx_conf() {
         echo "Nginx not installed!!!"
         exit 1
     fi
-    NGINX_CONFIG_FILE
     if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
         NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
-        # sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME
-        echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
     elif [ -d "$NGINX_CONFIG_DIR/conf.d" ]; then
         NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/conf.d/$NGINX_CONFIG_NAME"
-        # sudo cp $NGINX_CONFIG_TEMPLATE /etc/nginx/conf.d/$NGINX_CONFIG_NAME
-        echo "Copy config $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_DIR/conf.d/$NGINX_CONFIG_NAME"
     else
         echo "Nginx config path not found!!!"
         exit 1
@@ -190,13 +185,14 @@ init_nginx_conf() {
     read -p "Please enter the local web server ip and port (default http://127.0.0.1:6868): " flask_server || exit 1
     flask_server=${flask_server:-http://127.0.0.1:6868}
 
+    echo "Copy config template $NGINX_CONFIG_TEMPLATE to $NGINX_CONFIG_FILE"
     sudo cp -f $NGINX_CONFIG_TEMPLATE $NGINX_CONFIG_FILE
-    sudo sed \
-        -i "s|{{PUBLIC_IP}}|$domain|g" \
-        -i "s|{{PORT}}|$port|g" \
-        -i "s|{{FLASK_IP}}|$flask_server|g" \
-        $NGINX_CONFIG_FILE
-    echo "Please modify the config file $NGINX_CONFIG_FILE and run 'sudo systemctl restart nginx' to take effect."
+    sudo sed -i "s|{{PUBLIC_IP}}|$domain|g" $NGINX_CONFIG_FILE
+    sudo sed -i "s|{{PORT}}|$port|g" $NGINX_CONFIG_FILE
+    sudo sed -i "s|{{FLASK_IP}}|$flask_server|g" $NGINX_CONFIG_FILE
+
+    echo "Run 'sudo systemctl reload nginx' to apply changes."
+    echo "Additional modifications are in the file: $NGINX_CONFIG_FILE"
 }
 
 
