@@ -67,4 +67,4 @@
     # bind = unix:/path/to/your/ts_server.sock
     # nginx 对应的转发ip改成一致的 http://unix:/path/to/your/ts_server.sock
     ```
-3. 运行部署脚本安装提示自动生成Nginx配置：`bash ./deploy.sh init-nginx-conf`
+3. 运行部署脚本按照提示自动生成Nginx配置：`bash ./deploy.sh init-nginx-conf`

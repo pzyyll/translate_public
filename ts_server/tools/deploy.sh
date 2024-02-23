@@ -85,7 +85,10 @@ init_default_data_path() {
 }
 
 init_gunicorn_config() {
+    read -p "Bind ip and port (default: 127.0.0.1:6868): " bind || exit 1
+    bind=${bind:-127.0.0.1:6868}
     sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
+        -e "s|{{BIND}}|$bind|g" \
         $GUNICORN_CONFIG_TEMPLATE | tee $GUNI_CONFIG_FILE > /dev/null
 }
 
