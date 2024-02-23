@@ -8,6 +8,8 @@
 
 import os
 import config
+import atexit
+
 
 from utils import path_helper
 path_helper.set_exec_file(__file__)
@@ -43,5 +45,12 @@ def make_shell_context():
     return {'db': db, 'User': User, 'gm': GMCommand()}
 
 
+def exit_clear():
+    from ts_common.external_libs.pyhelper.utils.proxy_helper import ProxyWorkerPoolManager
+
+    ProxyWorkerPoolManager().shutdown()
+
+
 if __name__ == '__main__':
+    atexit.register(exit_clear)
     app.run(debug=True)

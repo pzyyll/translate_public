@@ -5,6 +5,7 @@
 import logging
 
 from flask import render_template
+from flask import request, jsonify
 from app.index import index_bp
 from app import limiter
 
@@ -29,7 +30,6 @@ def translate_request():
 @login_required
 @limiter.limit("2 per second")
 def translate_process_text():
-    from flask import request, jsonify
     from app.api.translate import gl_proxy_apis
     data = request.json
     text = data.get('text', '')
@@ -38,12 +38,10 @@ def translate_process_text():
         return jsonify({'processed_text': ""})
 
     try:
-        if api_type:
-            with gl_proxy_apis.api_type_context(api_type):
-                result = gl_proxy_apis.translate_text(text)
-        else:
+        with gl_proxy_apis.api_type_context(api_type):
             result = gl_proxy_apis.translate_text(text)
-            api_type = gl_proxy_apis.last_translate_api_type
+            if not api_type:
+                api_type = gl_proxy_apis.last_translate_api_type
             processed_text = result.get('translate_text') or text
         logger.debug('processed_text: %s', result)
     except Exception as exc:

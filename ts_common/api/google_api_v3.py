@@ -8,7 +8,7 @@ import logging
 import os
 
 from google.cloud import translate
-from ts_common.api.base_api import ProxyAwareTranslateAPI
+from ts_common.api.base_api import BaseTranslateAPI
 from ts_common.api.api_utils import simple_random_text_segments
 
 
@@ -19,7 +19,7 @@ class MimeType(object):
     PLAIN = 'text/plain'
 
 
-class GoogleAPIV3(ProxyAwareTranslateAPI):
+class GoogleAPIV3(BaseTranslateAPI):
     DEFAULT_TIMEOUT = 5
 
     def init(self, conf):
@@ -37,7 +37,7 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.auth_key
         os.environ["PROJECT_ID"] = self.project_id
 
-    def _translate_text(self, text, to_lang=None, **kwargs) -> dict:
+    def translate_text(self, text, to_lang=None, **kwargs) -> dict:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Text must be a non-empty string.")
         
@@ -46,13 +46,17 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
 
         logging.debug(f'translate request text: {text}, params: {kwargs}')
 
-        from_lang = kwargs.get('from_lang', None)
-        if not to_lang:
-            detect_lang = self.detect_language(simple_random_text_segments(text)).get('language_code') if not from_lang else from_lang
-            to_lang = 'en' if 'zh' in detect_lang else 'zh'
-
-        google_api_extra_params = kwargs.get('google_api_extra_params', {})
         try:
+            detected_lang = from_lang = kwargs.get('from_lang', None)
+            timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
+            if not to_lang:
+                if not detected_lang:
+                    detected_lang = self.detect_language(
+                        simple_random_text_segments(text), timeout=timeout).get('language_code')
+                to_lang = 'en' if 'zh' in detected_lang else 'zh'
+
+            google_api_extra_params = kwargs.get('google_api_extra_params', {})
+
             response = self.client.translate_text(
                 request={
                     "parent": self.parent,
@@ -62,7 +66,7 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
                     **({'source_language_code': from_lang} if from_lang else {}),
                     **google_api_extra_params,
                 },
-                timeout=self.DEFAULT_TIMEOUT
+                timeout=timeout
             )
             translate_result = response.translations[0]
             translate_text = html.unescape(translate_result.translated_text)
@@ -76,7 +80,7 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
             logging.error(f"Failed to translate text: '{text[:50]}...'. Error: {e}")
             raise RuntimeError(f"Translation failed: '{text[:50]}...'|{e}") from e
 
-    def _detect_language(self, text, **kwargs) -> dict:
+    def detect_language(self, text, **kwargs) -> dict:
         """
         Detects the language of the given text using an external API.
         
@@ -97,11 +101,13 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
         mime_type = kwargs.get('mime_type', 'text/plain')  # Default MIME type to 'text/plain'
         
         try:
+            timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
             response = self.client.detect_language(
                 content=text,
                 parent=self.parent,
                 mime_type=mime_type,
-                timeout=self.DEFAULT_TIMEOUT
+                timeout=timeout,
+                **kwargs
             )
             detected_language = response.languages[0].language_code
             confidence = response.languages[0].confidence
@@ -111,12 +117,14 @@ class GoogleAPIV3(ProxyAwareTranslateAPI):
             logging.error(f"Failed to detect language: {e}")
             raise Exception(f"Failed to detect language: {e}")
 
-    def _list_languages(self, display_language_code=None, **kwargs) -> list:
+    def list_languages(self, display_language_code=None, **kwargs) -> list:
         try:
+            timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
             response = self.client.get_supported_languages(
                 parent=self.parent, 
                 display_language_code=display_language_code,
-                timeout=self.DEFAULT_TIMEOUT)
+                timeout=timeout,
+                **kwargs)
             return [
                 {
                     "language_code": lan.language_code,

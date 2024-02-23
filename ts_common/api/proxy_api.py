@@ -5,7 +5,10 @@
 import logging
 from collections import OrderedDict
 
-from .base_api import ProxyAwareTranslateAPI, TranslateError
+from ts_common.external_libs.pyhelper.singleton import ABCSingletonMeta
+from ts_common.external_libs.pyhelper.utils.proxy_helper import ProxyWorkerPool
+
+from .base_api import BaseTranslateAPI, TranslateError
 from .google_api import GoogleAPI
 from .baidu_api import BaiduAPI
 
@@ -23,7 +26,40 @@ class ApiTypeContext(object):
         self.api.set_api_type(None)
 
 
-class ProxyAPIs(ProxyAwareTranslateAPI):
+class TranslateAPIProxyExecutor(BaseTranslateAPI):
+    @classmethod
+    def create(cls, proxy, proxy_cls, *args, **kwargs):
+        proxy_executor = cls()
+        proxy_executor._init_worker(proxy, proxy_cls, *args, **kwargs)
+        return proxy_executor
+
+    def _init_worker(self, proxy, proxy_cls, *proxy_cls_args, **proxy_cls_kwargs):
+        self.proxy = proxy
+        if self.proxy:
+            # 需要代理访问的API，创建一个新的代理进程池处理，代理需要设置全局的socket.socket避免多线程下代理设置污染主进程
+            self.proxy_worker = ProxyWorkerPool()
+            self.proxy_worker.set_proxy_info(self.proxy, proxy_cls, *proxy_cls_args, **proxy_cls_kwargs)
+
+    def _execute(self, func, *args, **kwargs):
+        if self.proxy_worker:
+            result = self.proxy_worker.submit(func, *args, **kwargs)
+            return result.result()
+
+    def translate_text(self, text, to_lang=None, **kwargs):
+        return self._execute("translate_text", text, to_lang, **kwargs)
+
+    def detect_language(self, text, **kwargs):
+        return self._execute("detect_language", text, **kwargs)
+
+    def list_languages(self, display_language_code=None, **kwargs):
+        return self._execute("list_languages", display_language_code, **kwargs)
+
+
+class GlobalGoobleAPI(GoogleAPI, metaclass=ABCSingletonMeta):
+    pass
+
+
+class ProxyAPIs(BaseTranslateAPI):
     GOOGLE = 'google'
     BAIDU = 'baidu'
     
@@ -41,7 +77,11 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
         self._apis = OrderedDict({})
         self.last_translate_api_type = None
         for api_type, api_class in self.API_TYPE.items():
-            self._apis[api_type] = api_class(conf.get(api_type, {}))
+            api_conf = conf.get(api_type, {})
+            self._apis[api_type] = (
+                TranslateAPIProxyExecutor.create(api_conf.get("proxy"), api_class, api_conf)
+                if "proxy" in api_conf else api_class(api_conf)
+            )
 
     def set_api_type(self, api_type=None):
         super(ProxyAPIs, self).set_api_type(None)
@@ -52,7 +92,7 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
         from contextlib import nullcontext
         return ApiTypeContext(self, api_type) if api_type else nullcontext()
 
-    def _detect_language(self, text, **kwargs):
+    def detect_language(self, text, **kwargs):
         if self._default_api:
             try:
                 return self._default_api.detect_language(text, **kwargs)
@@ -67,7 +107,7 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
                 continue
         raise TranslateError('All APIs failed to detect language.')
 
-    def _translate_text(self, text, to_lang=None, **kwargs):
+    def translate_text(self, text, to_lang=None, **kwargs):
         if self._default_api:
             try:
                 return self._default_api.translate_text(text, to_lang, **kwargs)
@@ -84,7 +124,7 @@ class ProxyAPIs(ProxyAwareTranslateAPI):
                 continue
         raise TranslateError('All APIs failed to translate text.')
 
-    def _list_languages(self, display_language_code=None):
+    def list_languages(self, display_language_code=None):
         if self._default_api:
             try:
                 return self._default_api.list_languages(display_language_code)

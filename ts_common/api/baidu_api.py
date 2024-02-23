@@ -7,7 +7,7 @@ import hashlib
 import requests
 import logging
 import six
-from .base_api import ProxyAwareTranslateAPI as BaseAPI
+from .base_api import BaseTranslateAPI as BaseAPI
 from .base_api import TranslateError
 from .api_utils import simple_random_text_segments
 
@@ -30,7 +30,7 @@ class BaiduAPI(BaseAPI):
     def _make_salt(self):
         return random.randint(0xffff, 0xffffffff)
 
-    def _detect_language(self, text, **kwargs) -> dict:
+    def detect_language(self, text, **kwargs) -> dict:
         salt = self._make_salt()
         sign = self._make_sign(text, salt)
         params = {'appid': self.app_id, 'q': text, 'salt': salt, 'sign': sign}
@@ -40,10 +40,10 @@ class BaiduAPI(BaseAPI):
             result = r.json()
             return {"language_code": result.get('data').get('src')}
         except Exception as e:
-            logging.error(f"baidu api _detect_language error: {e}|{result}")
-            raise Exception(f"baidu api _detect_language error: {e}|{result}")
+            logging.error(f"baidu api _detect_language error: {e}")
+            raise Exception(f"baidu api _detect_language error: {e}")
 
-    def _translate_text(self, text, to_lang=None, **kwargs) -> dict:
+    def translate_text(self, text, to_lang=None, **kwargs) -> dict:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Text must be a non-empty string.")
         
@@ -52,13 +52,10 @@ class BaiduAPI(BaseAPI):
 
         logging.debug(f'translate request text: {text}, params: {kwargs}')
 
-        from_lang = kwargs.get('from_lang', None)
+        detected_lang = from_lang = kwargs.get('from_lang', None)
         if not to_lang:
-            detected_lang = (
-                self.detect_language(simple_random_text_segments(text)).get('language_code', 'en')
-                if not from_lang
-                else from_lang
-                )
+            if not detected_lang:
+                detected_lang = self.detect_language(simple_random_text_segments(text)).get('language_code', 'en')
             to_lang = 'en' if 'zh' in detected_lang else 'zh'
 
         salt = self._make_salt()
@@ -78,12 +75,12 @@ class BaiduAPI(BaseAPI):
                 # print('translate error: {}'.format(result.get('error_msg')))
                 raise TranslateError(f"translate error: {result.get('error_code')}|{result.get('error_msg')}")
             translate_text = '\n'.join([trans.get('dst') for trans in result.get('trans_result')])
-            return {"translate_text": translate_text, "detected_language_code": from_lang}
+            return {"translate_text": translate_text, "detected_language_code": detected_lang}
         except Exception as e:
             logging.error(f"baidu api _translate_text error: {e}")
             raise TranslateError(f"baidu api _translate_text error: {e}")
 
-    def _list_languages(self, display_language_code=None, **kwargs):
+    def list_languages(self, display_language_code=None, **kwargs):
         print('baidu api not support list language')
         return None
 

@@ -73,11 +73,11 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <textarea class="form-control" id="sourceText" placeholder="Text to be translated..." control-id="ControlID-1"></textarea>
+            <textarea class="form-control" id="sourceText" placeholder="Text to be translated..." control-id="ControlID-1">{{ source_text }}</textarea>
         </div>
         <div class="col">
-            <textarea class="form-control" id="mirroredText" placeholder="Translation text will appear here..." readonly="" control-id="ControlID-2"></textarea>
-            <div id="extraContent" class="extra-content"></div> <!-- 额外内容的容器 -->
+            <textarea class="form-control" id="mirroredText" placeholder="Translation text will appear here..." readonly="" control-id="ControlID-2">{{ target_text }}</textarea>
+            <div id="extraContent" class="extra-content">{{ extra_content }}</div> <!-- 额外内容的容器 -->
         </div>
     </div>
 </div>
