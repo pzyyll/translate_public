@@ -1,4 +1,7 @@
 #!/bin/bash
+# source deps
+source /dev/stdin <<< "$(curl -s https://raw.githubusercontent.com/pzyyll/shell-snippets/main/load.sh | bash -s -- color_echo mk_dir)"
+
 
 USER=$(whoami)
 GROUP=$(id -g -n $USER)
@@ -12,54 +15,26 @@ PYTHON_CMD="python"
 TEMP_DIR=$(mktemp -d)
 TEMP_MK_FILE_LOG="$TEMP_DIR/mk_files.log"
 
+
 exit_status() {
     EXIT_STATUS="$1"
     exit $EXIT_STATUS
 }
 
 
-mk_dir() {
+local_mkdir() {
+    # log the first not exist dir
     local dir="$1"
     if [ ! -d "$dir" ]; then
-        if sudo mkdir -p "$dir"; then
-            echo "$dir" >> "$TEMP_MK_FILE_LOG"
-            sudo chown -R $USER:$GROUP "$dir"
+        local result=$(USER=$USER mk_dir "$dir")
+        if [ "$?" -eq 0 ]; then
+            echo "$result" >> "$TEMP_MK_FILE_LOG"
             return 0
         else
             echo "Error: Failed to create directory '$dir'."
             return 1
         fi
     fi
-}
-
-color_echo() {
-    # 定义颜色
-    local style=0
-    case $3 in
-        "bold") style="1" ;;  # 粗体或高亮
-        "lighten") style="2" ;;  # 次亮
-        "italic") style="3" ;;  # 斜体，并非所有的终端都支持
-        "underline") style="4" ;;  # 下划线
-        "blink") style="5" ;;  # 闪烁
-        "reverse") style="7" ;;  # 反显
-        "conceal") style="8" ;;  # 隐匿
-        "strike") style="9" ;;  # 删除线, 并非所有的终端都支持
-        *) style="0" ;;
-    esac
-
-    local COLOR_PREFIX="\033[${style};"
-    local RESET='\033[0m'
-
-    case "$2" in
-        "red") echo -e "${COLOR_PREFIX}31m$1${RESET}" ;;
-        "green") echo -e "${COLOR_PREFIX}32m$1${RESET}" ;;
-        "yellow") echo -e "${COLOR_PREFIX}33m$1${RESET}" ;;
-        "blue") echo -e "${COLOR_PREFIX}34m$1${RESET}" ;;
-        "purple") echo -e "${COLOR_PREFIX}35m$1${RESET}" ;;
-        "cyan") echo -e "${COLOR_PREFIX}36m$1${RESET}" ;;
-        "white") echo -e "${COLOR_PREFIX}37m$1${RESET}" ;;
-        *) echo -e "$1" ;;
-    esac
 }
 
 
@@ -118,7 +93,69 @@ get_python_env() {
             fi
         done    
     fi
-    echo "$python_version"
+    color_echo "$python_version" yellow
+}
+
+
+check_git() {
+    # 检查 Git 是否已安装
+    if ! command -v git &> /dev/null
+    then
+        echo "Git 未安装。正在尝试安装 Git..."
+        read -p "Git 未安装，是否尝试安装？$(color_echo "[yes/no]" yellow italic): " answ
+        case $answ in
+            [Yy][Ee][Ss])
+                color_echo "开始安装 Git..." yellow
+                ;;
+            *)
+                color_echo "See you next time! :)" green
+                exit_status 1
+                ;;
+        esac
+        # 检测操作系统
+        OS="$(uname -s)"
+        case "${OS}" in
+            Linux*)     os=Linux;;
+            Darwin*)    os=Mac;;
+            # CYGWIN*)    os=Cygwin;;
+            # MINGW*)     os=MinGw;;
+            *)          os="UNKNOWN:${OS}"
+        esac
+
+        echo "检测到的操作系统：${os}"
+
+        # 根据操作系统安装 Git
+        case "${os}" in
+            Linux)
+                if [ -f /etc/debian_version ]; then
+                    # 基于 Debian 的系统
+                    sudo apt-get update
+                    sudo apt-get install git -y
+                elif [ -f /etc/redhat-release ]; then
+                    # 基于 RedHat 的系统
+                    sudo yum update
+                    sudo yum install git -y
+                else
+                    color_echo "未检测到当前系统可用安装包, 请手动安装 Git: https://git-scm.com/downloads" red
+
+                fi
+                ;;
+            Mac)
+                # 使用 Homebrew 安装 Git
+                which -s brew
+                if [[ $? != 0 ]] ; then
+                    # 安装 Homebrew
+                    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                fi
+                brew install git
+                ;;
+            *)
+                color_echo "未检测到当前系统可用安装包, 请手动安装 Git: https://git-scm.com/downloads" red
+                ;;
+        esac
+    else
+        color_echo "Git 版本：$(git --version)" yellow
+    fi
 }
 
 
@@ -129,6 +166,7 @@ initialize_variables() {
 
     WORK_DIR="$PROJECT_DIR/ts_server"
     TOOLS_DIR="$PROJECT_DIR/ts_server/tools"
+    PYENV_DEPS_REQUIREMENTS_FILE="$TOOLS_DIR/requirements.txt"
     SERVICE_TEMPLATE="$TOOLS_DIR/deploy_templates/ts_svr.service.template"
     GUNICORN_CONFIG_TEMPLATE="$TOOLS_DIR/deploy_templates/gunicorn_config.py.template"
     TS_TRANSLATE_CONFIG_TEMPLATE="$TOOLS_DIR/deploy_templates/ts_translate_api.conf.template"
@@ -137,10 +175,11 @@ initialize_variables() {
 
     ENV_BIN_DIR="$WORK_DIR/.venv/bin"
 
-    DEFAULT_LOG_DIR="$WORK_DIR/logs"
-    DEFAULT_DATA_DIR="$WORK_DIR/data"
-    DEFAULT_FLASK_SESSION_DIR="$WORK_DIR/flask_session"
-    DEFAULT_CONFIG_DIR="$WORK_DIR/conf"
+    APP_DATA="$WORK_DIR/app_data"
+    DEFAULT_LOG_DIR="$APP_DATA/logs"
+    DEFAULT_DATA_DIR="$APP_DATA/db"
+    DEFAULT_FLASK_SESSION_DIR="$APP_DATA/flask_session"
+    DEFAULT_CONFIG_DIR="$APP_DATA/conf"
 
     SERVICE_NAME="$(basename ${SERVICE_TEMPLATE%.template})"
     NGINX_CONFIG_NAME="$(basename ${NGINX_CONFIG_TEMPLATE%.template})"
@@ -202,7 +241,7 @@ init() {
         read -p "The path does not exist. Do you want to create?$(color_echo "[yes/no]" yellow italic): " answ
         case $answ in
             [Yy][Ee][Ss])
-                mk_dir $PROJECT_ROOT_DIR || exit_status 1
+                local_mkdir $PROJECT_ROOT_DIR || exit_status 1
                 # 更新成绝对路径，以防输入的是个相对路径
                 # (Update to absolute path in case the input is a relative path)
                 break
@@ -265,14 +304,31 @@ init() {
 
 
 init_default_data_path() {
-    mk_dir $DEFAULT_LOG_DIR
-    mk_dir $DEFAULT_DATA_DIR
-    mk_dir $DEFAULT_FLASK_SESSION_DIR
-    mk_dir $DEFAULT_CONFIG_DIR
+    local_mkdir $DEFAULT_LOG_DIR
+    local_mkdir $DEFAULT_DATA_DIR
+    local_mkdir $DEFAULT_FLASK_SESSION_DIR
+    local_mkdir $DEFAULT_CONFIG_DIR
 }
 
 
 init_gunicorn_config() {
+    if [ -f $GUNI_CONFIG_FILE ]; then
+        while true; do
+            read -p "Gunicorn config file $(color_echo "$GUNI_CONFIG_FILE" green) already exists. Do you want to overwrite it? $(color_echo "[yes/no]" yellow italic): " answer
+            case $answer in
+                [Yy][Ee][Ss])
+                    break
+                    ;;
+                [Nn][Oo])
+                    return 1
+                    ;;
+                *)
+                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
+                    ;;
+            esac
+        done
+    fi
+
     while true; do
         read -p "Bind ip and port (default: $(color_echo "127.0.0.1:6868" green)): " bind
         bind=${bind:-127.0.0.1:6868}
@@ -297,8 +353,8 @@ init_flask_config() {
 
 init_systemd_service() {
     if [ ! -d "/run/systemd/system" ]; then
-        color_echo "Systemd not support!!!" red
-        exit_status 1
+        color_echo "Systemd not support." red
+        return 1
     fi
 
     GUNI_BIN="$ENV_BIN_DIR/gunicorn"
@@ -392,11 +448,53 @@ init_nginx_conf() {
 
 up_source() {
     # 更新项目代码
+    color_echo "Updating project source code..." yellow
     cd $PROJECT_DIR
     git pull origin main
-    git read-tree -mu HEAD
-    git submodule update --recursive
+    if [ $1 == "force" ]; then
+        git read-tree -mu HEAD
+    fi
+    git submodule update --init --recursive
 }
+
+
+init_pyenv() {
+    color_echo "\nInitializing python running deps..." yellow
+
+    cd $WORK_DIR || exit_status 1
+
+    color_echo "\nStart installing python venv ..." yellow
+    $PYTHON_CMD -m pip install --upgrade pip || exit_status 1
+    $PYTHON_CMD -m pip install virtualenv --user
+    $PYTHON_CMD -m venv .venv --clear
+
+    color_echo "Start installing python deps ..." yellow
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install -r $DEPS_REQUIREMENTS_FILE
+
+    color_echo "Linking ts_common ..." yellow
+    if [ ! -d $WORK_DIR/ts_common ] ; then
+        ln -sf $PROJECT_DIR/ts_common $WORK_DIR/ts_common
+    fi
+}
+
+service() {
+    if [ "$1" == "start" ]; then
+        systemctl start $SERVICE_NAME
+    elif [ "$1" == "stop" ]; then
+        systemctl stop $SERVICE_NAME
+    elif [ "$1" == "restart" ]; then
+        systemctl restart $SERVICE_NAME
+    elif [ "$1" == "status" ]; then
+        systemctl status $SERVICE_NAME
+    elif [ "$1" == "reload" ]; then
+        systemctl daemon-reload
+    else
+        echo "Usage: $0 $1 {start|stop|restart|status|reload}"
+    fi
+}
+
 
 help() {
     echo "Usage: $0 {init|init-conf-noservice|install-service|uninstall-service|service|up-source|init-pyenv|test-run|update|init-nginx-conf}"
@@ -432,63 +530,50 @@ sig_cleanup() {
 trap exit_cleanup EXIT
 trap sig_cleanup SIGINT SIGTERM
 
-color_echo "Temp dir: $TEMP_DIR" green
 
 if [ -f $TS_ENV_FILE ]; then
     source $TS_ENV_FILE
 fi
 
+check_git
 get_python_env
-
 initialize_variables
 
 
-if [ "$1" == "init" ]; then
-    init
-    init_conf_not_service
-    init_systemd_service
-
-    echo "Default configuration file path: $(color_echo "$DEFAULT_CONFIG_DIR" green)"
-    echo "Default log file path: $(color_echo "$DEFAULT_LOG_DIR" green)"
-    echo "Default data file path: $(color_echo "$DEFAULT_DATA_DIR" green)"
-    echo "Then run $(color_echo "'sudo systemctl start ts_svr'" red) to start the service."
-elif [ "$1" == "init-noservice" ]; then
-    if [ ! -d $PROJECT_DIR ]; then
+case $1 in
+    "init")
         init
-    fi
-    init_conf_not_service
+        init_conf_not_service
+        init_systemd_service
 
-    echo "Default configuration file path: $(color_echo "$DEFAULT_CONFIG_DIR" green)"
-    echo "Default log file path: $(color_echo "$DEFAULT_LOG_DIR" green)"
-    echo "Default data file path: $(color_echo "$DEFAULT_DATA_DIR" green)"
-elif [ "$1" == "install-service" ]; then
-    init_systemd_service
-elif [ "$1" == "uninstall-service" ]; then
-    uninstall_service
-elif [ "$1" == "service" ]; then
-    if [ "$2" == "start" ]; then
-        systemctl start $SERVICE_NAME
-    elif [ "$2" == "stop" ]; then
-        systemctl stop $SERVICE_NAME
-    elif [ "$2" == "restart" ]; then
-        systemctl restart $SERVICE_NAME
-    elif [ "$2" == "status" ]; then
-        systemctl status $SERVICE_NAME
-    elif [ "$2" == "reload" ]; then
-        systemctl daemon-reload
-    else
-        echo "Usage: $0 $1 {start|stop|restart|status|reload}"
-    fi
-elif [ "$1" == "up-source" ]; then
-    up_source
-elif [ "$1" == "init-pyenv" ]; then
-    bash $TOOLS_DIR/svr_init.sh init
-elif [ "$1" == "test-run" ]; then
-    bash $TOOLS_DIR/svr_init.sh test_run
-elif [ "$1" == "update" ]; then
-    update_script
-elif [ "$1" == "init-nginx-conf" ]; then
-    init_nginx_conf
-else
-    help
-fi
+        color_echo "Default configuration file path: $(color_echo "$DEFAULT_CONFIG_DIR" green)"
+        color_echo "Default log file path: $(color_echo "$DEFAULT_LOG_DIR" green)"
+        color_echo "Default data file path: $(color_echo "$DEFAULT_DATA_DIR" green)"
+        color_echo "Then run $(color_echo "'sudo systemctl start ts_svr'" red) to start the service."
+        ;;
+    "install-service")
+        init_systemd_service
+        ;;
+    "uninstall-service")
+        uninstall_service
+        ;;
+    "service")
+        service $2
+        ;;
+    "up-source")
+        up_source force
+        ;;
+    "init-pyenv")
+        up_source
+        init_pyenv
+        ;;
+    "update")
+        update_script
+        ;;
+    "init-nginx-conf")
+        init_nginx_conf
+        ;;
+    *)
+        help
+        ;;
+esac

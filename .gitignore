@@ -155,3 +155,5 @@ config.py
 **/tmp
 **/data
 **/conf
+
+**/app_data
